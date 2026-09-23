@@ -1,17 +1,3 @@
-"""
-Veritas — Online Assessment Platform with Integrated Observability
-====================================================================
-FastAPI backend implementing:
-  - Auth (register/login) backed by an in-memory SQLite database
-  - A quiz catalog with timed, auto-graded MCQ exams
-  - Browser-tab anti-cheat penalty enforcement
-  - Four Prometheus metric instruments (Counter, Gauge, Histogram, Summary)
-  - ECS-compliant structured JSON logging to stdout
-  - Embedded observability experiments (anomaly injection, cardinality demo)
-
-Run with: uvicorn app.main:app --host 0.0.0.0 --port 8000
-"""
-
 import asyncio
 import json
 import logging
@@ -40,13 +26,6 @@ from prometheus_client import (
     CONTENT_TYPE_LATEST,
 )
 
-# ---------------------------------------------------------------------------
-# ECS-COMPLIANT STRUCTURED JSON LOGGER
-# ---------------------------------------------------------------------------
-# Emits a single-line JSON document per log event directly to stdout.
-# Docker captures stdout via its logging driver (json-file), and Filebeat's
-# Docker autodiscovery tails the container's log file -- no file I/O, no
-# blocking network calls, no sensitive data (passwords/tokens) ever logged.
 
 SERVICE_NAME = "veritas-app"
 
@@ -85,11 +64,7 @@ def new_trace_id() -> str:
     """W3C trace-context compliant 16-byte (32 hex char) trace id.
 
     A single uuid4().hex is exactly 32 hex characters (16 bytes) -- that
-    alone satisfies the W3C traceparent trace-id field length. (An earlier
-    version of this function concatenated two UUIDs together, producing a
-    48-character/24-byte string that silently violated the spec it claimed
-    to follow -- worth remembering if you ever see trace IDs elsewhere in
-    this codebase that look unusually long.)
+    alone satisfies the W3C traceparent trace-id field length. 
     """
     return uuid.uuid4().hex
 
@@ -111,21 +86,8 @@ def ecs_log(level: str, message: str, *, trace_id: str = None, event_action: str
     )
 
 
-# ---------------------------------------------------------------------------
-# PROMETHEUS METRICS -- all four core instrument types
-# ---------------------------------------------------------------------------
-# All metrics register to prometheus_client's default REGISTRY (rather than
-# a fresh CollectorRegistry()) so that /metrics also exposes the library's
-# built-in process/platform/GC collectors for free: process_cpu_seconds_total,
-# process_resident_memory_bytes, process_virtual_memory_bytes,
-# process_open_fds, process_start_time_seconds, and python_gc_objects_*.
-# These give host-level (Node Exporter) AND process-level (this app's own
-# footprint) visibility side by side in Grafana -- see the provisioned
-# "Veritas Overview" dashboard.
 
 # 1. COUNTER -- monotonically increasing count of quiz outcomes.
-#    Low-cardinality labels only: status + quiz_id (NOT student_id -- see
-#    the cardinality experiment below for why).
 QUIZ_SUBMISSIONS_TOTAL = Counter(
     "veritas_quiz_submissions_total",
     "Total number of quiz submissions, partitioned by outcome and quiz.",
@@ -149,63 +111,29 @@ GRADING_DURATION_SECONDS = Histogram(
 )
 
 # 4. SUMMARY -- end-to-end gateway processing time.
-#    IMPORTANT (and easy to get wrong): the *Python* prometheus_client
-#    implementation of Summary only tracks a running `_sum` and `_count`
-#    (exposed as `_sum{route=...}` / `_count{route=...}` series) -- it does
-#    NOT compute streaming quantiles the way the Java client does. There is
-#    no `{quantile="0.5"}` label to query here. What you CAN derive from a
-#    Summary is a genuine sliding-window AVERAGE via PromQL:
-#        rate(veritas_gateway_processing_seconds_sum[5m])
-#      / rate(veritas_gateway_processing_seconds_count[5m])
-#    For true percentiles (p95/p99), use the Histogram instrument above
-#    with histogram_quantile() instead -- that's exactly why this project
-#    uses both instrument types rather than relying on the Summary alone.
 GATEWAY_PROCESSING_SECONDS = Summary(
     "veritas_gateway_processing_seconds",
     "End-to-end request processing time observed at the gateway layer.",
     ["route"],
 )
 
-# BONUS -- Info metric: static build/version metadata as labels on a
-# constant series of value 1. Not one of the four required core types, but
-# a common, cheap way to make a service's version queryable/joinable in
-# PromQL (e.g. `veritas_app_info{version="1.0.0"}`).
 APP_INFO = Info("veritas_app", "Static build metadata for the Veritas service.")
 APP_INFO.info({"version": "1.0.0", "service": SERVICE_NAME})
 
-# BONUS -- a plain business Gauge: total registered users. Cheap, low-
-# cardinality (single series, no labels), and demonstrates a Gauge used for
-# a monotonic-looking business count as opposed to the up/down
-# ACTIVE_TEST_TAKERS gauge above.
 REGISTERED_USERS_TOTAL = Gauge(
     "veritas_registered_users_total",
     "Total number of registered user accounts.",
 )
 
-# ---------------------------------------------------------------------------
-# PART E.2 -- CARDINALITY EXPLOSION EXPERIMENT (real, runnable)
-# ---------------------------------------------------------------------------
-# CARDINALITY_DEMO_USE_LABEL controls whether the demo counter below
-# attaches a per-call request_id label (the anti-pattern) or not (the
-# fix). This is an environment variable specifically so the assignment's
-# "remove the label, restart the test app" step is a real restart with a
-# real config change -- not a code edit -- via docker-compose.yml:
-#     environment:
-#       - CARDINALITY_DEMO_USE_LABEL=true   # or false
-# then `docker compose up --build veritas` to actually restart it.
 CARDINALITY_DEMO_USE_LABEL = os.environ.get("CARDINALITY_DEMO_USE_LABEL", "true").lower() != "false"
 
 if CARDINALITY_DEMO_USE_LABEL:
-    # ANTI-PATTERN: request_id is unbounded -- every call creates a brand
-    # new, permanent time series that Prometheus never reuses or expires.
     DEMO_REQUESTS_TOTAL = Counter(
         "demo_requests_total",
         "Cardinality experiment counter (labeled by request_id -- anti-pattern).",
         ["request_id"],
     )
 else:
-    # THE FIX: no per-request label at all, so every call increments the
-    # exact same single time series no matter how many requests occur.
     DEMO_REQUESTS_TOTAL = Counter(
         "demo_requests_total",
         "Cardinality experiment counter (no per-request label -- safe).",
@@ -274,11 +202,6 @@ def init_db():
 
 
 def seed_admin(conn):
-    # Demo-only admin account, seeded fresh every time the (in-memory) DB
-    # initializes. Public /api/register can never create an admin account
-    # -- is_admin is always 0 for self-registered users -- so this seeded
-    # row is the only way into the admin dashboard. Change these
-    # credentials before using this pattern anywhere beyond a local demo.
     c = conn.cursor()
     c.execute(
         "INSERT INTO users (id, username, password, is_admin, created_at) VALUES (?, ?, ?, 1, ?)",
@@ -394,22 +317,6 @@ async def gateway_timing_middleware(request: Request, call_next):
     request.state.trace_id = trace_id
     response = await call_next(request)
     duration = time.perf_counter() - start
-    # IMPORTANT: label with the matched *route template* (e.g.
-    # "/api/history/{user_id}"), never request.url.path. The resolved path
-    # contains the caller-supplied user_id, and using it as a metric label
-    # would recreate -- inside our own gateway metric -- the exact
-    # high-cardinality anti-pattern Part E.2 exists to warn against: a new,
-    # permanent time series for every distinct user who ever calls this
-    # endpoint. Starlette stores the matched Route object (with the
-    # original path pattern, not the substituted values) on
-    # request.scope["route"] once routing has resolved, which by this
-    # point (after call_next has returned) it always has for any request
-    # that matched a route. Requests that matched nothing (404s) fall back
-    # to the literal path, which is fine since those are typically probes/
-    # typos with low, bounded variety in practice -- but if this app were
-    # public-facing, an unauthenticated bot hammering random 404 paths
-    # could grow this label unbounded too, so treat that fallback as a
-    # known, accepted trade-off rather than a solved problem.
     route_obj = request.scope.get("route")
     route = route_obj.path if route_obj is not None else request.url.path
     GATEWAY_PROCESSING_SECONDS.labels(route=route).observe(duration)
@@ -462,14 +369,6 @@ class AdminCreateQuizRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 def require_admin(conn, user_id: str):
-    """Raise 403 unless user_id belongs to an admin account.
-
-    This app has no real session/token layer (see README's auth
-    limitations) -- the client just holds a user_id after login, the same
-    lightweight pattern the rest of the app already uses. This check is
-    consistent with that existing (demo-only) trust model rather than
-    inventing a separate, inconsistent one just for admin routes.
-    """
     c = conn.cursor()
     c.execute("SELECT is_admin FROM users WHERE id = ?", (user_id,))
     row = c.fetchone()
@@ -670,12 +569,6 @@ async def _grade_and_record(quiz_id: str, user_id: str, answers: dict, tab_switc
     into `attempts` directly -- is what makes seeded activity show up in
     Prometheus and Kibana identically to real traffic, instead of only
     being visible in the app's own history table."""
-    # ------------------------------------------------------------------
-    # PART E.1 -- ANOMALY INJECTION
-    # Every 5th submission (globally) gets an artificial 500ms delay to
-    # produce a visible p95 latency spike in the grading histogram and a
-    # corresponding slow-query warning log for Kibana correlation.
-    # ------------------------------------------------------------------
     _submission_counter["n"] += 1
     is_scheduled_anomaly = _submission_counter["n"] % 5 == 0
     inject_delay = simulate_anomaly or is_scheduled_anomaly
@@ -755,26 +648,10 @@ async def submit_exam(payload: SubmitExamRequest, request: Request):
     )
 
 
-# ---------------------------------------------------------------------------
-# DEMO DATA SEEDING
-# ---------------------------------------------------------------------------
-# Runs once at startup (controlled by the SEED_DEMO_DATA env var, default
-# "true") so a fresh instance already has something to look at: a few demo
-# students, a spread of passed/failed/cheated attempts across all three
-# seeded quizzes. Every attempt below goes through _grade_and_record() --
-# the exact same function the real /api/exam/submit endpoint uses -- so
-# Prometheus metrics and Kibana logs show this activity identically to how
-# they'd show real traffic, not just rows quietly sitting in the DB. Set
-# SEED_DEMO_DATA=false in docker-compose.yml's `veritas` service to start
-# with a clean, empty instance instead (e.g. for a live class demo where
-# you want to generate every data point yourself, on camera).
 
 DEMO_STUDENTS = ["alice_demo", "bob_demo", "carol_demo", "dave_demo", "erin_demo"]
 DEMO_PASSWORD = "demo123"
 
-# (student, quiz_id, answers, tab_switch_count) -- a deliberate mix of
-# passed / failed / cheated outcomes spread across all 3 seeded quizzes,
-# so every status/quiz combination has at least one example to look at.
 DEMO_ATTEMPTS = [
     ("alice_demo", "python_101",        {"0": 1, "1": 1, "2": 0, "3": 2, "4": 1}, 0),  # 5/5 passed
     ("alice_demo", "observability_301", {"0": 1, "1": 1, "2": 1, "3": 1}, 0),          # 4/4 passed
@@ -829,10 +706,6 @@ async def seed_demo_data():
 # ---------------------------------------------------------------------------
 # ROUTES -- ADMIN
 # ---------------------------------------------------------------------------
-# Everything here requires admin_id to belong to an admin account
-# (require_admin above). There is exactly one seeded admin account
-# ("admin"/"admin123" -- see seed_admin()); public registration can never
-# create one.
 
 @app.get("/api/admin/stats")
 async def admin_stats(admin_id: str):

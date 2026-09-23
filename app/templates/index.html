@@ -5,12 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Veritas — Online Assessments</title>
 <style>
-  /* -------------------------------------------------------------------
-     THEME -- light is the default; [data-theme="dark"] on <html> swaps
-     every variable below to the dark palette. Nothing else in this file
-     hardcodes a theme-sensitive color -- every component reads from
-     these variables, so the toggle in the topbar Just Works everywhere.
-     ------------------------------------------------------------------- */
   :root {
     --bg: #f4f5fa;
     --panel: #ffffff;
@@ -437,12 +431,6 @@ function switchTab(tab) {
 }
 
 // ---------------- CATALOG ----------------
-// Quiz metadata is kept in this in-memory map (id -> quiz object) rather
-// than serialized into onclick="..." attributes. Inlining JSON.stringify()
-// straight into an HTML attribute breaks the moment a title/topic contains
-// an apostrophe or double-quote, and re-parses untrusted text as code.
-// Looking the quiz up by its (safe, server-generated) id sidesteps that
-// entirely — no string escaping required.
 const quizCache = {};
 
 function escapeHtml(str) {
@@ -604,17 +592,6 @@ function updateTimerDisplay() {
   timerEl.textContent = `${m}:${s}`;
   timerEl.classList.toggle("low", examTimeRemaining <= 30);
 }
-
-// Page Visibility API + window blur — two independent signals for the
-// same underlying event ("the student left the exam"). Switching browser
-// tabs fires visibilitychange; Alt-Tabbing to another application fires
-// blur; and in many browsers switching tabs fires BOTH at once. Without
-// the isAwayFromExam guard below, one real departure would get counted
-// twice (once per event) — exactly the bug reported after testing this.
-// The guard collapses any number of near-simultaneous "you left" signals
-// into exactly one increment per departure, and only re-arms once the
-// student actually comes back (visible again AND focused), so leaving a
-// second time still counts as a second switch.
 function handleVisibilityChange() {
   if (!examActive) return;
   if (document.hidden) {
@@ -773,8 +750,6 @@ async function deleteQuiz(quizId) {
   loadAdminQuizzes();
 }
 
-// Quiz builder: each question row lets the admin type 4 options and pick
-// which one is correct via a set of radio buttons scoped to that question.
 function addQuizBuilderQuestion() {
   const idx = qbQuestionCount++;
   const container = document.getElementById("qbQuestions");

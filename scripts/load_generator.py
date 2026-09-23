@@ -1,37 +1,3 @@
-#!/usr/bin/env python3
-"""
-Veritas Load Generator
-======================
-Drives continuous, realistic traffic against a running Veritas stack
-(docker compose up) using many concurrent virtual "students", so that
-Prometheus metrics (submission rates, active test-takers, grading
-p95/p99, gateway processing time) and Kibana logs stay populated
-instead of flatlining to zero between manual clicks in the UI.
-
-Each virtual user:
-  1. Registers a unique account (once).
-  2. Loops forever:
-     - picks a random quiz from /api/quizzes
-     - calls /api/exam/start          (bumps veritas_active_test_takers up)
-     - "sits" in the exam for a random think-time, occasionally firing
-       /api/exam/tab_switch partway through (feeds the cheat-detection
-       path and Kibana's tab_switched events)
-     - submits random answers via /api/exam/submit, occasionally with
-       ?simulate_anomaly=true (feeds the p95/p99 latency spike demo)
-     - pauses briefly, then repeats
-
-Virtual users' start times are staggered and their think-times are
-randomized, so exams are always overlapping in flight -- that overlap,
-not any single user, is what keeps active_test_takers from dipping to 0.
-
-Usage:
-    pip install requests
-    python load_generator.py --url http://localhost:8000 --users 20
-
-Stop with Ctrl+C -- each virtual user finishes its current step and
-exits cleanly.
-"""
-
 import argparse
 import random
 import string

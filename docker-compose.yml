@@ -19,26 +19,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Seeds 5 demo students (alice_demo..erin_demo / demo123) and 12
-      # attempts spread across passed/failed/cheated outcomes on every
-      # startup, via the real grading/metrics/logging code path -- so
-      # Grafana, Kibana, and the admin dashboard all have real data to
-      # show immediately. Set to "false" for a clean, empty instance
-      # (e.g. a live demo where you want to generate every data point
-      # yourself, on camera, without pre-existing noise).
       - SEED_DEMO_DATA=true
-      # Part E.2 cardinality experiment (see README section 6.2). true =
-      # the demo_requests_total counter is labeled by request_id (the
-      # anti-pattern); false = the same counter with no per-request label
-      # (the fix). Flip this and run `docker compose up --build veritas`
-      # to get a real restart for the "before/after" comparison the
-      # assignment asks for.
       - CARDINALITY_DEMO_USE_LABEL=true
     networks:
       - veritas-net
     labels:
-      # Consumed by Filebeat's Docker autodiscovery to opt this
-      # container's stdout into the log-shipping pipeline.
       co.elastic.logs/enabled: "true"
     logging:
       driver: "json-file"
@@ -110,11 +95,6 @@ services:
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
-      # Elasticsearch wants to mlock its heap; an unbounded memlock ulimit
-      # avoids a common "memory locking requested but not available"
-      # bootstrap failure. This is a container-runtime setting (handled by
-      # the Docker engine itself), so it applies regardless of what's
-      # inside the Elasticsearch image.
       memlock:
         soft: -1
         hard: -1
@@ -125,11 +105,6 @@ services:
     networks:
       - veritas-net
     healthcheck:
-      # The official Elasticsearch image ships curl specifically to support
-      # this pattern. A bare 200-or-anything response from the root
-      # endpoint is enough to know the JVM is up and serving HTTP; we
-      # don't require cluster status "green" since a single-node cluster
-      # with no replicas reports "yellow" by design and that's fine here.
       test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
       interval: 10s
       timeout: 10s
