@@ -1,0 +1,878 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Overview",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total Submissions",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(veritas_quiz_submissions_total)",
+          "legendFormat": "",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Cheating Rate",
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "100 * sum(veritas_quiz_submissions_total{status=\"cheated\"}) / sum(veritas_quiz_submissions_total)",
+          "legendFormat": "",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 25
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Registered Users",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "veritas_registered_users_total",
+          "legendFormat": "",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Active Test-Takers (all quizzes)",
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(veritas_active_test_takers)",
+          "legendFormat": "",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "row",
+      "title": "Business Metrics",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Quiz Submission Rate by Status",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(veritas_quiz_submissions_total[1m])) by (status)",
+          "legendFormat": "{{status}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Active Test-Takers by Quiz",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "veritas_active_test_takers",
+          "legendFormat": "{{quiz_id}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "Latency (Histogram + Summary)",
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Grading Duration p95 / p99",
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(veritas_grading_duration_seconds_bucket[5m])) by (le, quiz_id))",
+          "legendFormat": "p95 {{quiz_id}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(veritas_grading_duration_seconds_bucket[5m])) by (le, quiz_id))",
+          "legendFormat": "p99 {{quiz_id}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Gateway Avg Processing Time by Route (Summary)",
+      "gridPos": {
+        "x": 12,
+        "y": 15,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "rate(veritas_gateway_processing_seconds_sum[5m]) / rate(veritas_gateway_processing_seconds_count[5m])",
+          "legendFormat": "{{route}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "row",
+      "title": "Application Process Health",
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Veritas Process CPU",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"veritas-app\"}[1m])",
+          "legendFormat": "CPU seconds/sec",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Veritas Process Memory (RSS)",
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"veritas-app\"}",
+          "legendFormat": "RSS",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Host System (Node Exporter)",
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Host CPU Usage %",
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU %",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Host Memory Usage %",
+      "gridPos": {
+        "x": 12,
+        "y": 33,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))",
+          "legendFormat": "Memory %",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Host Disk I/O",
+      "gridPos": {
+        "x": 0,
+        "y": 41,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "rate(node_disk_read_bytes_total[5m])",
+          "legendFormat": "read {{device}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total[5m])",
+          "legendFormat": "write {{device}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Host Network I/O",
+      "gridPos": {
+        "x": 12,
+        "y": 41,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
+          "legendFormat": "rx {{device}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        },
+        {
+          "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])",
+          "legendFormat": "tx {{device}}",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": true
+          }
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "veritas",
+    "observability"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Veritas Overview",
+  "uid": "veritas-overview",
+  "version": 1,
+  "weekStart": ""
+}

@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # Application metrics — the /metrics endpoint exposed by Veritas
+  # (Counter, Gauge, Histogram, Summary).
+  - job_name: "veritas-app"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["veritas:8000"]
+        labels:
+          service: "veritas-app"
+
+  # Host-level system metrics (CPU, memory, disk, network I/O).
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          service: "host-system"
+
+  # Prometheus scraping itself — useful baseline for the assignment demo.
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

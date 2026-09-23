@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+# Filebeat -- hints-based Docker autodiscovery
+# ---------------------------------------------------------------------------
+# With hints.enabled: true and no `default_config`, Filebeat only creates a
+# log input for containers that explicitly opt in via the
+# `co.elastic.logs/enabled: "true"` label (set on the `veritas` service in
+# docker-compose.yml). Every other container (prometheus, grafana, etc.) is
+# left alone -- no manual `templates:`/`condition:` block needed, which is
+# both simpler and less error-prone than hand-rolling label-matching rules.
+#
+# The auto-generated input uses Filebeat's `container` input type, which
+# already understands the Docker/CRI json-file log format and unwraps it
+# for you -- there's no need to separately configure json.keys_under_root
+# or json.message_key (those only apply to the older, generic `log` input
+# type reading raw files, not `container`).
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+# ---------------------------------------------------------------------------
+# Processors (applied to every harvested event, in order)
+# ---------------------------------------------------------------------------
+processors:
+  # Enrich each event with container/image metadata (container.id,
+  # container.name, image.name, etc.) -- useful for filtering in Kibana.
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+
+  # app/main.py's ECSJsonFormatter already emits one complete, single-line
+  # ECS JSON document per log line straight to stdout. The `container`
+  # input surfaces that raw line as the event's `message` field. This
+  # processor parses that JSON string and hoists its keys (@timestamp,
+  # log.level, service.name, trace.id, event.action, student.id, ...) up
+  # to the top level of the event, so they become directly queryable
+  # fields in Kibana/Elasticsearch instead of being buried inside a
+  # string.
+  - decode_json_fields:
+      fields: ["message"]
+      target: ""
+      overwrite_keys: true
+      add_error_key: true
+
+# ---------------------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------------------
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  index: "veritas-logs-%{+yyyy.MM.dd}"
+
+setup.template.name: "veritas-logs"
+setup.template.pattern: "veritas-logs-*"
+setup.ilm.enabled: false
+
+logging.level: info
+logging.to_files: false
+logging.to_stderr: true

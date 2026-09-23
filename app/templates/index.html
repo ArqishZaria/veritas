@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veritas — Online Assessments</title>
+<style>
+  /* -------------------------------------------------------------------
+     THEME -- light is the default; [data-theme="dark"] on <html> swaps
+     every variable below to the dark palette. Nothing else in this file
+     hardcodes a theme-sensitive color -- every component reads from
+     these variables, so the toggle in the topbar Just Works everywhere.
+     ------------------------------------------------------------------- */
+  :root {
+    --bg: #f4f5fa;
+    --panel: #ffffff;
+    --panel-2: #f0f1f7;
+    --accent: #6c5ce7;
+    --accent-2: #059669;
+    --danger: #dc2f4e;
+    --warn: #b6740a;
+    --text: #1b1e2b;
+    --muted: #666b85;
+    --border: #e2e4ee;
+
+    --badge-bg: #ece9fc;      --badge-text: #5b4fcf;
+    --pass-bg: #e2f8ef;       --pass-text: #05784f;
+    --fail-bg: #fdeaed;       --fail-text: #b5233f;
+    --cheat-bg: #fff2e0;      --cheat-text: #93590a;
+
+    --warning-bg: #fdeaed;    --warning-border: #dc2f4e; --warning-text: #92263c;
+    --overlay: rgba(20, 22, 35, 0.6);
+  }
+  html[data-theme="dark"] {
+    --bg: #0f1220;
+    --panel: #171b2e;
+    --panel-2: #1f2440;
+    --accent: #7c6cf0;
+    --accent-2: #00d4a3;
+    --danger: #ff5470;
+    --warn: #ffb454;
+    --text: #eef0fb;
+    --muted: #8f94b3;
+    --border: #2a2f4d;
+
+    --badge-bg: rgba(108,92,231,0.2);   --badge-text: #b3a6ff;
+    --pass-bg: rgba(0,212,163,0.15);    --pass-text: #00d4a3;
+    --fail-bg: rgba(255,84,112,0.15);   --fail-text: #ff5470;
+    --cheat-bg: rgba(255,180,84,0.15);  --cheat-text: #ffb454;
+
+    --warning-bg: rgba(255,84,112,0.12); --warning-border: #ff5470; --warning-text: #ffb0bf;
+    --overlay: rgba(5, 6, 15, 0.85);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
+  }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 32px; border-bottom: 1px solid var(--border);
+    background: var(--panel); position: sticky; top: 0; z-index: 10;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.3rem; }
+  .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2); }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .icon-btn {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.1rem; padding: 0;
+  }
+  .container { max-width: 1000px; margin: 0 auto; padding: 32px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 24px; margin-bottom: 20px;
+  }
+  h1, h2, h3 { margin-top: 0; }
+  input, button, select, textarea {
+    font-family: inherit; font-size: 0.95rem; border-radius: 8px; border: 1px solid var(--border);
+    padding: 10px 14px; background: var(--panel-2); color: var(--text);
+  }
+  input, select { width: 100%; margin-bottom: 12px; }
+  button {
+    cursor: pointer; background: var(--accent); border: none; color: white; font-weight: 600;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+  button:hover { opacity: 0.9; }
+  button:active { transform: scale(0.98); }
+  button.secondary { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); }
+  button.danger { background: var(--danger); }
+  button.small { padding: 6px 12px; font-size: 0.85rem; width: auto; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 8px 16px;
+  }
+  .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .quiz-item {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .badge {
+    display: inline-block; font-size: 0.72rem; padding: 3px 9px; border-radius: 999px;
+    background: var(--badge-bg); color: var(--badge-text); width: fit-content;
+  }
+  .badge.pass { background: var(--pass-bg); color: var(--pass-text); }
+  .badge.fail { background: var(--fail-bg); color: var(--fail-text); }
+  .badge.cheat { background: var(--cheat-bg); color: var(--cheat-text); }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  th { color: var(--muted); font-weight: 600; }
+  .hidden { display: none !important; }
+  .modal-overlay {
+    position: fixed; inset: 0; background: var(--overlay); display: flex;
+    align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+    max-width: 640px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 28px;
+  }
+  .timer {
+    font-variant-numeric: tabular-nums; font-size: 1.4rem; font-weight: 700;
+    padding: 6px 16px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--border);
+  }
+  .timer.low { color: var(--danger); border-color: var(--danger); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .question-block { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .option-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+  .option-row:hover { background: var(--panel-2); }
+  .option-row.correct { background: var(--pass-bg); }
+  .option-row.incorrect-pick { background: var(--fail-bg); }
+  .warning-banner {
+    background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text);
+    padding: 10px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 0.88rem;
+  }
+  .alert-toast {
+    position: fixed; top: 20px; right: 20px; background: var(--panel); border: 1px solid var(--warn);
+    color: var(--text); padding: 12px 18px; border-radius: 10px; z-index: 200; font-weight: 600;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+  }
+  .muted { color: var(--muted); font-size: 0.85rem; }
+  .stat-row { display: flex; gap: 24px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: var(--panel-2); border-radius: 10px; padding: 14px 20px; flex: 1; min-width: 140px; text-align: center; }
+  .stat .value { font-size: 1.6rem; font-weight: 700; }
+  .search-row { display: flex; gap: 10px; }
+  .search-row input { margin-bottom: 0; }
+  .link-card {
+    display: flex; align-items: center; justify-content: space-between; background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 10px;
+  }
+  .qb-question {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .qb-option-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .qb-option-row input[type="text"] { margin-bottom: 0; }
+  .qb-option-row input[type="radio"] { width: auto; }
+  .row-flex { display: flex; gap: 12px; }
+  .row-flex > * { flex: 1; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .checkbox-row input { width: auto; margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span> Veritas</div>
+  <div class="topbar-right">
+    <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark">🌙</button>
+    <div id="userBadge" class="muted hidden"></div>
+    <button class="secondary small hidden" id="logoutBtn" onclick="logout()">Log out</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- AUTH VIEW -->
+  <div id="authView" class="card" style="max-width:420px;margin:60px auto;">
+    <h2 id="authTitle">Log in</h2>
+    <input id="authUsername" placeholder="Username">
+    <input id="authPassword" type="password" placeholder="Password">
+    <button id="authSubmitBtn" onclick="handleAuthSubmit()" style="width:100%;">Log in</button>
+    <p class="muted" style="margin-top:14px;">
+      <span id="authSwitchLabel">Don't have an account?</span>
+      <a href="#" onclick="toggleAuthMode(event)" style="color:var(--accent);">
+        <span id="authSwitchAction">Register</span>
+      </a>
+    </p>
+  </div>
+
+  <!-- STUDENT DASHBOARD VIEW -->
+  <div id="dashboardView" class="hidden">
+    <div class="tabs">
+      <button class="tab-btn active" id="tabCatalogBtn" onclick="switchTab('catalog')">Quiz Catalog</button>
+      <button class="tab-btn" id="tabHistoryBtn" onclick="switchTab('history')">Attempted Tests</button>
+    </div>
+
+    <div id="catalogTab">
+      <div class="card">
+        <div class="search-row">
+          <input id="searchInput" placeholder="Search quizzes by title or topic..." oninput="loadQuizzes()">
+        </div>
+      </div>
+      <div id="quizGrid" class="quiz-grid"></div>
+    </div>
+
+    <div id="historyTab" class="hidden">
+      <div class="card">
+        <div class="stat-row">
+          <div class="stat"><div class="value" id="statAttempts">0</div><div class="muted">Attempts</div></div>
+          <div class="stat"><div class="value" id="statAverage">0%</div><div class="muted">Average Score</div></div>
+        </div>
+        <table>
+          <thead><tr><th>Quiz</th><th>Score</th><th>Status</th><th>Tab Switches</th><th>Date</th><th></th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD VIEW -->
+  <div id="adminView" class="hidden">
+    <div class="tabs">
+      <button class="tab-btn active" id="tabOverviewBtn" onclick="switchAdminTab('overview')">Overview</button>
+      <button class="tab-btn" id="tabResultsBtn" onclick="switchAdminTab('results')">All Results</button>
+      <button class="tab-btn" id="tabManageBtn" onclick="switchAdminTab('manage')">Manage Quizzes</button>
+    </div>
+
+    <!-- Overview -->
+    <div id="adminOverviewTab">
+      <div class="card">
+        <div class="stat-row">
+          <div class="stat"><div class="value" id="adminStatUsers">0</div><div class="muted">Registered Students</div></div>
+          <div class="stat"><div class="value" id="adminStatQuizzes">0</div><div class="muted">Quizzes</div></div>
+          <div class="stat"><div class="value" id="adminStatAttempts">0</div><div class="muted">Total Attempts</div></div>
+          <div class="stat"><div class="value" id="adminStatCheatRate">0%</div><div class="muted">Cheating Rate</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Deep-dive metrics &amp; logs</h3>
+        <p class="muted">The numbers above are a quick glance. For real dashboards and log search, this app ships a full observability stack alongside it:</p>
+        <div class="link-card">
+          <div><strong>Grafana</strong><div class="muted">Live metrics: submission rates, latency percentiles, host &amp; process health</div></div>
+          <button class="secondary" onclick="window.open('http://localhost:3000/d/veritas-overview', '_blank')">Open Grafana ↗</button>
+        </div>
+        <div class="link-card">
+          <div><strong>Kibana</strong><div class="muted">Structured logs: every tab-switch, login, and cheating flag, searchable</div></div>
+          <button class="secondary" onclick="window.open('http://localhost:5601', '_blank')">Open Kibana ↗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Results -->
+    <div id="adminResultsTab" class="hidden">
+      <div class="card">
+        <div class="checkbox-row">
+          <input type="checkbox" id="cheatFilterCheckbox" onchange="renderAdminResults()">
+          <label for="cheatFilterCheckbox">Show only flagged cheating</label>
+        </div>
+        <table>
+          <thead><tr><th>Student</th><th>Quiz</th><th>Score</th><th>Status</th><th>Tab Switches</th><th>Date</th></tr></thead>
+          <tbody id="adminResultsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Manage Quizzes -->
+    <div id="adminManageTab" class="hidden">
+      <div class="card">
+        <h3 style="margin-top:0;">Existing Quizzes</h3>
+        <div id="adminQuizList"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Add New Quiz</h3>
+        <div class="row-flex">
+          <input id="qbTitle" placeholder="Quiz title">
+          <input id="qbTopic" placeholder="Topic">
+        </div>
+        <input id="qbDuration" type="number" placeholder="Duration (seconds)" value="180">
+        <div id="qbQuestions"></div>
+        <button class="secondary" onclick="addQuizBuilderQuestion()" style="width:100%;margin-bottom:12px;">+ Add Question</button>
+        <button onclick="submitNewQuiz()" style="width:100%;">Create Quiz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RULES / PRE-EXAM MODAL -->
+<div id="rulesModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="rulesQuizTitle">Exam Rules</h2>
+    <ul class="muted">
+      <li>You will have a fixed countdown timer. The exam auto-submits when time runs out.</li>
+      <li>Do <strong>not</strong> switch tabs, minimize the window, or open another application.</li>
+      <li>Leaving the exam window is tracked. Any detected tab switch will result in an automatic score of 0.</li>
+      <li>Click "Submit" only when you are finished — this action is final.</li>
+    </ul>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button onclick="closeRulesModal()" class="secondary">Cancel</button>
+      <button onclick="beginExam()">I Understand — Start Exam</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXAM MODAL -->
+<div id="examModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:720px;">
+    <div class="exam-header">
+      <h2 id="examTitle" style="margin:0;">Exam</h2>
+      <div class="timer" id="examTimer">03:00</div>
+    </div>
+    <div id="examWarning" class="warning-banner hidden">
+      ⚠️ Tab switch detected! Further switches or leaving the exam will result in a score of 0.
+    </div>
+    <form id="examForm"></form>
+    <button onclick="submitExam()" style="width:100%;margin-top:8px;">Submit Exam</button>
+  </div>
+</div>
+
+<!-- REVIEW ANSWERS MODAL -->
+<div id="reviewModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:720px;">
+    <div class="exam-header">
+      <h2 id="reviewQuizTitle" style="margin:0;">Review</h2>
+      <button class="secondary small" onclick="closeReviewModal()">Close</button>
+    </div>
+    <div id="reviewBody"></div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let authMode = "login";
+let currentQuiz = null;
+let examTimerInterval = null;
+let examTimeRemaining = 0;
+let tabSwitchCount = 0;
+let examActive = false;
+let isAwayFromExam = false; // guards against double-counting one departure as two switches
+let adminResultsCache = [];
+let qbQuestionCount = 0;
+
+// ---------------- THEME ----------------
+(function initTheme() {
+  const saved = localStorage.getItem("veritas-theme");
+  if (saved === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+})();
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  if (isDark) {
+    document.documentElement.removeAttribute("data-theme");
+    localStorage.setItem("veritas-theme", "light");
+    document.getElementById("themeToggleBtn").textContent = "🌙";
+  } else {
+    document.documentElement.setAttribute("data-theme", "dark");
+    localStorage.setItem("veritas-theme", "dark");
+    document.getElementById("themeToggleBtn").textContent = "☀️";
+  }
+}
+// Set the initial icon to match whatever initTheme() applied above.
+document.addEventListener("DOMContentLoaded", () => {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  document.getElementById("themeToggleBtn").textContent = isDark ? "☀️" : "🌙";
+});
+
+// ---------------- AUTH ----------------
+function toggleAuthMode(e) {
+  e.preventDefault();
+  authMode = authMode === "login" ? "register" : "login";
+  document.getElementById("authTitle").textContent = authMode === "login" ? "Log in" : "Register";
+  document.getElementById("authSubmitBtn").textContent = authMode === "login" ? "Log in" : "Register";
+  document.getElementById("authSwitchLabel").textContent = authMode === "login" ? "Don't have an account?" : "Already have an account?";
+  document.getElementById("authSwitchAction").textContent = authMode === "login" ? "Register" : "Log in";
+}
+
+async function handleAuthSubmit() {
+  const username = document.getElementById("authUsername").value.trim();
+  const password = document.getElementById("authPassword").value;
+  if (!username || !password) { showToast("Please fill in both fields."); return; }
+  const endpoint = authMode === "login" ? "/api/login" : "/api/register";
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.detail || "Authentication failed."); return; }
+    currentUser = data;
+    onLoggedIn();
+  } catch (err) { showToast("Network error — is the backend running?"); }
+}
+
+function onLoggedIn() {
+  document.getElementById("authView").classList.add("hidden");
+  const badge = document.getElementById("userBadge");
+  badge.classList.remove("hidden");
+  badge.textContent = "Logged in as " + currentUser.username + (currentUser.is_admin ? " (admin)" : "");
+  document.getElementById("logoutBtn").classList.remove("hidden");
+
+  if (currentUser.is_admin) {
+    document.getElementById("adminView").classList.remove("hidden");
+    loadAdminOverview();
+  } else {
+    document.getElementById("dashboardView").classList.remove("hidden");
+    loadQuizzes();
+  }
+}
+
+function logout() {
+  currentUser = null;
+  document.getElementById("authView").classList.remove("hidden");
+  document.getElementById("dashboardView").classList.add("hidden");
+  document.getElementById("adminView").classList.add("hidden");
+  document.getElementById("userBadge").classList.add("hidden");
+  document.getElementById("logoutBtn").classList.add("hidden");
+  document.getElementById("authUsername").value = "";
+  document.getElementById("authPassword").value = "";
+  if (authMode !== "login") toggleAuthMode({preventDefault: () => {}});
+}
+
+// ---------------- STUDENT TABS ----------------
+function switchTab(tab) {
+  document.getElementById("tabCatalogBtn").classList.toggle("active", tab === "catalog");
+  document.getElementById("tabHistoryBtn").classList.toggle("active", tab === "history");
+  document.getElementById("catalogTab").classList.toggle("hidden", tab !== "catalog");
+  document.getElementById("historyTab").classList.toggle("hidden", tab !== "history");
+  if (tab === "history") loadHistory();
+}
+
+// ---------------- CATALOG ----------------
+// Quiz metadata is kept in this in-memory map (id -> quiz object) rather
+// than serialized into onclick="..." attributes. Inlining JSON.stringify()
+// straight into an HTML attribute breaks the moment a title/topic contains
+// an apostrophe or double-quote, and re-parses untrusted text as code.
+// Looking the quiz up by its (safe, server-generated) id sidesteps that
+// entirely — no string escaping required.
+const quizCache = {};
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function loadQuizzes() {
+  const search = document.getElementById("searchInput").value;
+  const res = await fetch("/api/quizzes" + (search ? "?search=" + encodeURIComponent(search) : ""));
+  const data = await res.json();
+  const grid = document.getElementById("quizGrid");
+  grid.innerHTML = "";
+  data.quizzes.forEach(q => {
+    quizCache[q.id] = q;
+    const el = document.createElement("div");
+    el.className = "quiz-item";
+    el.innerHTML = `
+      <span class="badge">${escapeHtml(q.topic)}</span>
+      <h3 style="margin:4px 0;">${escapeHtml(q.title)}</h3>
+      <div class="muted">${Math.floor(q.duration_seconds/60)} min · ${escapeHtml(q.id)}</div>
+      <button data-quiz-id="${escapeHtml(q.id)}" class="start-quiz-btn">Start Quiz</button>
+    `;
+    grid.appendChild(el);
+  });
+  if (data.quizzes.length === 0) {
+    grid.innerHTML = '<p class="muted">No quizzes match your search.</p>';
+  }
+  // Event delegation: one listener handles every "Start Quiz" button,
+  // including ones added by future re-renders (e.g. after a new search).
+  grid.querySelectorAll(".start-quiz-btn").forEach(btn => {
+    btn.addEventListener("click", () => openRulesModal(quizCache[btn.dataset.quizId]));
+  });
+}
+
+// ---------------- HISTORY ----------------
+let historyCache = [];
+
+async function loadHistory() {
+  const res = await fetch("/api/history/" + currentUser.user_id);
+  const data = await res.json();
+  historyCache = data.attempts;
+  document.getElementById("statAttempts").textContent = data.attempts.length;
+  document.getElementById("statAverage").textContent = data.average_score + "%";
+  const body = document.getElementById("historyBody");
+  body.innerHTML = "";
+  data.attempts.forEach(a => {
+    const badgeClass = a.status === "passed" ? "pass" : (a.status === "cheated" ? "cheat" : "fail");
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${escapeHtml(a.title)}</td>
+      <td>${a.score}%</td>
+      <td><span class="badge ${badgeClass}">${escapeHtml(a.status)}</span></td>
+      <td>${a.tab_switch_count}</td>
+      <td class="muted">${new Date(a.submitted_at).toLocaleString()}</td>
+      <td><button class="secondary small" data-attempt-id="${escapeHtml(a.id)}">View Answers</button></td>
+    `;
+    body.appendChild(row);
+  });
+  body.querySelectorAll("button[data-attempt-id]").forEach(btn => {
+    btn.addEventListener("click", () => openReviewModal(btn.dataset.attemptId));
+  });
+}
+
+// ---------------- ANSWER REVIEW ----------------
+async function openReviewModal(attemptId) {
+  const res = await fetch(`/api/attempts/${attemptId}/review?user_id=${currentUser.user_id}`);
+  if (!res.ok) { showToast("Couldn't load that attempt."); return; }
+  const data = await res.json();
+  document.getElementById("reviewQuizTitle").textContent = data.quiz_title + " — Review";
+  const body = document.getElementById("reviewBody");
+  if (data.status === "cheated") {
+    body.innerHTML = `<div class="warning-banner">This attempt was flagged for cheating (tab switches: ${data.tab_switch_count}), so it scored 0% regardless of the answers below.</div>`;
+  } else {
+    body.innerHTML = "";
+  }
+  data.questions.forEach((q, i) => {
+    const block = document.createElement("div");
+    block.className = "question-block";
+    let optionsHtml = q.options.map((opt, j) => {
+      let cls = "option-row";
+      if (j === q.correct_index) cls += " correct";
+      else if (j === q.selected_index) cls += " incorrect-pick";
+      const marker = j === q.correct_index ? " ✓" : (j === q.selected_index ? " ✗ (your answer)" : "");
+      return `<div class="${cls}">${escapeHtml(opt)}${marker}</div>`;
+    }).join("");
+    block.innerHTML = `<strong>${i + 1}. ${escapeHtml(q.question)}</strong>${optionsHtml}`;
+    body.appendChild(block);
+  });
+  document.getElementById("reviewModal").classList.remove("hidden");
+}
+function closeReviewModal() {
+  document.getElementById("reviewModal").classList.add("hidden");
+}
+
+// ---------------- EXAM FLOW ----------------
+function openRulesModal(quizMeta) {
+  currentQuiz = quizMeta;
+  document.getElementById("rulesQuizTitle").textContent = quizMeta.title + " — Exam Rules";
+  document.getElementById("rulesModal").classList.remove("hidden");
+}
+function closeRulesModal() {
+  document.getElementById("rulesModal").classList.add("hidden");
+}
+
+async function beginExam() {
+  closeRulesModal();
+  const res = await fetch("/api/quizzes/" + currentQuiz.id);
+  const quiz = await res.json();
+  currentQuiz = quiz;
+  tabSwitchCount = 0;
+  isAwayFromExam = false;
+  document.getElementById("examWarning").classList.add("hidden");
+
+  await fetch("/api/exam/start", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({quiz_id: quiz.id, user_id: currentUser.user_id})
+  });
+
+  document.getElementById("examTitle").textContent = quiz.title;
+  const form = document.getElementById("examForm");
+  form.innerHTML = "";
+  quiz.questions.forEach((q, i) => {
+    const block = document.createElement("div");
+    block.className = "question-block";
+    let optionsHtml = q.options.map((opt, j) => `
+      <label class="option-row">
+        <input type="radio" name="q${i}" value="${j}">
+        <span>${escapeHtml(opt)}</span>
+      </label>
+    `).join("");
+    block.innerHTML = `<strong>${i + 1}. ${escapeHtml(q.q)}</strong>${optionsHtml}`;
+    form.appendChild(block);
+  });
+
+  examTimeRemaining = quiz.duration_seconds;
+  updateTimerDisplay();
+  examTimerInterval = setInterval(() => {
+    examTimeRemaining--;
+    updateTimerDisplay();
+    if (examTimeRemaining <= 0) {
+      clearInterval(examTimerInterval);
+      submitExam(true);
+    }
+  }, 1000);
+
+  examActive = true;
+  document.getElementById("examModal").classList.remove("hidden");
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("blur", handleWindowBlur);
+  window.addEventListener("focus", handleWindowFocus);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(examTimeRemaining / 60).toString().padStart(2, "0");
+  const s = (examTimeRemaining % 60).toString().padStart(2, "0");
+  const timerEl = document.getElementById("examTimer");
+  timerEl.textContent = `${m}:${s}`;
+  timerEl.classList.toggle("low", examTimeRemaining <= 30);
+}
+
+// Page Visibility API + window blur — two independent signals for the
+// same underlying event ("the student left the exam"). Switching browser
+// tabs fires visibilitychange; Alt-Tabbing to another application fires
+// blur; and in many browsers switching tabs fires BOTH at once. Without
+// the isAwayFromExam guard below, one real departure would get counted
+// twice (once per event) — exactly the bug reported after testing this.
+// The guard collapses any number of near-simultaneous "you left" signals
+// into exactly one increment per departure, and only re-arms once the
+// student actually comes back (visible again AND focused), so leaving a
+// second time still counts as a second switch.
+function handleVisibilityChange() {
+  if (!examActive) return;
+  if (document.hidden) {
+    noteDeparture();
+  } else {
+    noteReturn();
+  }
+}
+function handleWindowBlur() {
+  if (examActive) noteDeparture();
+}
+function handleWindowFocus() {
+  if (examActive) noteReturn();
+}
+function noteDeparture() {
+  if (isAwayFromExam) return; // already counted this departure
+  isAwayFromExam = true;
+  registerTabSwitch();
+}
+function noteReturn() {
+  isAwayFromExam = false; // re-arm: the NEXT departure counts as a new switch
+}
+
+async function registerTabSwitch() {
+  tabSwitchCount++;
+  document.getElementById("examWarning").classList.remove("hidden");
+  showToast("⚠️ Tab switch #" + tabSwitchCount + " detected — this exam will be flagged.");
+  try {
+    await fetch("/api/exam/tab_switch", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({user_id: currentUser.user_id, quiz_id: currentQuiz.id})
+    });
+  } catch (e) { /* best-effort */ }
+}
+
+async function submitExam(auto = false) {
+  if (!examActive) return;
+  examActive = false;
+  clearInterval(examTimerInterval);
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
+  window.removeEventListener("blur", handleWindowBlur);
+  window.removeEventListener("focus", handleWindowFocus);
+
+  const answers = {};
+  currentQuiz.questions.forEach((q, i) => {
+    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+    if (selected) answers[i] = parseInt(selected.value);
+  });
+
+  const res = await fetch("/api/exam/submit", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      quiz_id: currentQuiz.id, user_id: currentUser.user_id,
+      answers, tab_switch_count: tabSwitchCount
+    })
+  });
+  const result = await res.json();
+  document.getElementById("examModal").classList.add("hidden");
+
+  if (result.cheated) {
+    showToast("❌ Exam flagged for cheating — score set to 0.");
+  } else {
+    showToast(auto
+      ? `⏱ Time's up! Auto-submitted. Score: ${result.score}%`
+      : `✅ Submitted! Score: ${result.score}%`);
+  }
+  switchTab("history");
+}
+
+// ---------------- ADMIN: TABS ----------------
+function switchAdminTab(tab) {
+  document.getElementById("tabOverviewBtn").classList.toggle("active", tab === "overview");
+  document.getElementById("tabResultsBtn").classList.toggle("active", tab === "results");
+  document.getElementById("tabManageBtn").classList.toggle("active", tab === "manage");
+  document.getElementById("adminOverviewTab").classList.toggle("hidden", tab !== "overview");
+  document.getElementById("adminResultsTab").classList.toggle("hidden", tab !== "results");
+  document.getElementById("adminManageTab").classList.toggle("hidden", tab !== "manage");
+  if (tab === "overview") loadAdminOverview();
+  if (tab === "results") loadAdminResults();
+  if (tab === "manage") loadAdminQuizzes();
+}
+
+// ---------------- ADMIN: OVERVIEW ----------------
+async function loadAdminOverview() {
+  const res = await fetch(`/api/admin/stats?admin_id=${currentUser.user_id}`);
+  if (!res.ok) { showToast("Couldn't load admin stats."); return; }
+  const data = await res.json();
+  document.getElementById("adminStatUsers").textContent = data.total_users;
+  document.getElementById("adminStatQuizzes").textContent = data.total_quizzes;
+  document.getElementById("adminStatAttempts").textContent = data.total_attempts;
+  document.getElementById("adminStatCheatRate").textContent = data.cheating_rate + "%";
+}
+
+// ---------------- ADMIN: ALL RESULTS ----------------
+async function loadAdminResults() {
+  const res = await fetch(`/api/admin/attempts?admin_id=${currentUser.user_id}`);
+  if (!res.ok) { showToast("Couldn't load results."); return; }
+  const data = await res.json();
+  adminResultsCache = data.attempts;
+  renderAdminResults();
+}
+function renderAdminResults() {
+  const onlyCheating = document.getElementById("cheatFilterCheckbox").checked;
+  const rows = onlyCheating
+    ? adminResultsCache.filter(a => a.status === "cheated")
+    : adminResultsCache;
+  const body = document.getElementById("adminResultsBody");
+  body.innerHTML = "";
+  rows.forEach(a => {
+    const badgeClass = a.status === "passed" ? "pass" : (a.status === "cheated" ? "cheat" : "fail");
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${escapeHtml(a.username)}</td>
+      <td>${escapeHtml(a.quiz_title)}</td>
+      <td>${a.score}%</td>
+      <td><span class="badge ${badgeClass}">${escapeHtml(a.status)}</span></td>
+      <td>${a.tab_switch_count}</td>
+      <td class="muted">${new Date(a.submitted_at).toLocaleString()}</td>
+    `;
+    body.appendChild(row);
+  });
+  if (rows.length === 0) {
+    body.innerHTML = '<tr><td colspan="6" class="muted">No results to show.</td></tr>';
+  }
+}
+
+// ---------------- ADMIN: MANAGE QUIZZES ----------------
+async function loadAdminQuizzes() {
+  const res = await fetch(`/api/admin/quizzes?admin_id=${currentUser.user_id}`);
+  if (!res.ok) { showToast("Couldn't load quizzes."); return; }
+  const data = await res.json();
+  const list = document.getElementById("adminQuizList");
+  list.innerHTML = "";
+  data.quizzes.forEach(q => {
+    const el = document.createElement("div");
+    el.className = "link-card";
+    el.innerHTML = `
+      <div><strong>${escapeHtml(q.title)}</strong><div class="muted">${escapeHtml(q.topic)} · ${q.questions.length} question(s) · ${Math.floor(q.duration_seconds/60)} min</div></div>
+      <button class="danger small" data-quiz-id="${escapeHtml(q.id)}">Delete</button>
+    `;
+    list.appendChild(el);
+  });
+  list.querySelectorAll("button[data-quiz-id]").forEach(btn => {
+    btn.addEventListener("click", () => deleteQuiz(btn.dataset.quizId));
+  });
+  if (data.quizzes.length === 0) {
+    list.innerHTML = '<p class="muted">No quizzes yet.</p>';
+  }
+}
+
+async function deleteQuiz(quizId) {
+  if (!confirm("Delete this quiz? This cannot be undone.")) return;
+  const res = await fetch(`/api/admin/quizzes/${quizId}?admin_id=${currentUser.user_id}`, {method: "DELETE"});
+  if (!res.ok) { showToast("Couldn't delete that quiz."); return; }
+  showToast("Quiz deleted.");
+  loadAdminQuizzes();
+}
+
+// Quiz builder: each question row lets the admin type 4 options and pick
+// which one is correct via a set of radio buttons scoped to that question.
+function addQuizBuilderQuestion() {
+  const idx = qbQuestionCount++;
+  const container = document.getElementById("qbQuestions");
+  const block = document.createElement("div");
+  block.className = "qb-question";
+  block.dataset.qIndex = idx;
+  let optionsHtml = "";
+  for (let j = 0; j < 4; j++) {
+    optionsHtml += `
+      <div class="qb-option-row">
+        <input type="radio" name="qb-correct-${idx}" value="${j}" ${j === 0 ? "checked" : ""}>
+        <input type="text" placeholder="Option ${j + 1}" class="qb-option-text">
+      </div>
+    `;
+  }
+  block.innerHTML = `
+    <div class="row-flex">
+      <input type="text" placeholder="Question text" class="qb-question-text">
+      <button class="danger small" onclick="this.closest('.qb-question').remove()">Remove</button>
+    </div>
+    ${optionsHtml}
+  `;
+  container.appendChild(block);
+}
+
+async function submitNewQuiz() {
+  const title = document.getElementById("qbTitle").value.trim();
+  const topic = document.getElementById("qbTopic").value.trim();
+  const duration = parseInt(document.getElementById("qbDuration").value) || 180;
+  const blocks = document.querySelectorAll("#qbQuestions .qb-question");
+
+  if (!title || !topic) { showToast("Give the quiz a title and topic."); return; }
+  if (blocks.length === 0) { showToast("Add at least one question."); return; }
+
+  const questions = [];
+  for (const block of blocks) {
+    const qText = block.querySelector(".qb-question-text").value.trim();
+    const optionInputs = block.querySelectorAll(".qb-option-text");
+    const options = Array.from(optionInputs).map(inp => inp.value.trim());
+    const correctRadio = block.querySelector(`input[name="qb-correct-${block.dataset.qIndex}"]:checked`);
+    if (!qText || options.some(o => !o)) {
+      showToast("Every question needs text and all 4 options filled in.");
+      return;
+    }
+    questions.push({q: qText, options, answer: parseInt(correctRadio.value)});
+  }
+
+  const res = await fetch("/api/admin/quizzes", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      admin_id: currentUser.user_id, title, topic,
+      duration_seconds: duration, questions
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    showToast(err.detail || "Couldn't create the quiz.");
+    return;
+  }
+  showToast("Quiz created!");
+  document.getElementById("qbTitle").value = "";
+  document.getElementById("qbTopic").value = "";
+  document.getElementById("qbDuration").value = "180";
+  document.getElementById("qbQuestions").innerHTML = "";
+  qbQuestionCount = 0;
+  loadAdminQuizzes();
+}
+
+// ---------------- UTIL ----------------
+function showToast(msg) {
+  const toast = document.createElement("div");
+  toast.className = "alert-toast";
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4500);
+}
+</script>
+</body>
+</html>
