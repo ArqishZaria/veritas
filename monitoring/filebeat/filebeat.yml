@@ -1,45 +1,43 @@
 # ---------------------------------------------------------------------------
-# Filebeat -- hints-based Docker autodiscovery
+# Filebeat -- static file-glob input (no Docker events watch required)
 # ---------------------------------------------------------------------------
-# With hints.enabled: true and no `default_config`, Filebeat only creates a
-# log input for containers that explicitly opt in via the
-# `co.elastic.logs/enabled: "true"` label (set on the `veritas` service in
-# docker-compose.yml). Every other container (prometheus, grafana, etc.) is
-# left alone -- no manual `templates:`/`condition:` block needed, which is
-# both simpler and less error-prone than hand-rolling label-matching rules.
-#
-# The auto-generated input uses Filebeat's `container` input type, which
-# already understands the Docker/CRI json-file log format and unwraps it
-# for you -- there's no need to separately configure json.keys_under_root
-# or json.message_key (those only apply to the older, generic `log` input
-# type reading raw files, not `container`).
-filebeat.autodiscover:
-  providers:
-    - type: docker
-      hints.enabled: true
+# The label-based `filebeat.autodiscover` approach depends on a persistent
+# "watch docker events" connection over the Docker socket. On Docker Desktop
+# for Windows, that connection gets killed by the named-pipe proxy's idle
+# timeout ("unexpected EOF" / "server closed idle connection"), which stops
+# autodiscover from ever starting a harvester. This static input sidesteps
+# the problem entirely: it just tails every container's json-file log
+# directly off disk -- no Docker API calls, no persistent socket needed.
+filebeat.inputs:
+  - type: container
+    paths:
+      - '/var/lib/docker/containers/*/*-json.log'
 
 # ---------------------------------------------------------------------------
-# Processors (applied to every harvested event, in order)
+# Processors
 # ---------------------------------------------------------------------------
 processors:
-  # Enrich each event with container/image metadata (container.id,
-  # container.name, image.name, etc.) -- useful for filtering in Kibana.
-  - add_docker_metadata:
-      host: "unix:///var/run/docker.sock"
-
-  # app/main.py's ECSJsonFormatter already emits one complete, single-line
-  # ECS JSON document per log line straight to stdout. The `container`
-  # input surfaces that raw line as the event's `message` field. This
-  # processor parses that JSON string and hoists its keys (@timestamp,
-  # log.level, service.name, trace.id, event.action, student.id, ...) up
-  # to the top level of the event, so they become directly queryable
-  # fields in Kibana/Elasticsearch instead of being buried inside a
-  # string.
+  # app/main.py's ECSJsonFormatter emits one complete ECS JSON document per
+  # line. The `container` input type unwraps Docker's {"log":...,"stream":
+  # ...,"time":...} wrapper automatically, exposing the raw app line as
+  # `message`. This hoists its keys to the top level.
   - decode_json_fields:
       fields: ["message"]
       target: ""
       overwrite_keys: true
       add_error_key: true
+
+  # Because this input tails EVERY container's logs (not just veritas, since
+  # we're no longer filtering by the co.elastic.logs/enabled label), drop
+  # anything that isn't a genuine Veritas ECS log line. Only veritas-app's
+  # logger ever populates service.name this way, so this reliably filters
+  # out Elasticsearch/Kibana/Grafana/Prometheus's own log noise without
+  # needing any Docker metadata lookup.
+  - drop_event:
+      when:
+        not:
+          equals:
+            service.name: "veritas-app"
 
 # ---------------------------------------------------------------------------
 # Output
