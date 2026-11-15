@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package veritas.exam.v1;
+
+// Same business rules and database as PUT /api/v1/sessions/{session_id}/attempt.
+service ExamService {
+  rpc SubmitExam(SubmitExamRequest) returns (SubmitExamResponse);
+}
+
+message SubmitExamRequest {
+  string session_id = 1;                 // server-issued; doubles as idempotency key
+  string user_id = 2;
+  map<int32, int32> answers = 3;         // question index -> chosen option index
+  int32 tab_switch_count = 4;            // client-reported; server also keeps its own count
+  bool simulate_anomaly = 5;             // A1 latency-spike experiment
+}
+
+message SubmitExamResponse {
+  string attempt_id = 1;
+  double score = 2;
+  string status = 3;                     // passed | failed | cheated
+  bool cheated = 4;
+  int32 correct = 5;
+  int32 total = 6;
+  bool replayed = 7;                     // true when an earlier identical submit was returned
+}
+
+
+
+

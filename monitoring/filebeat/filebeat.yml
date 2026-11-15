@@ -1,0 +1,33 @@
+filebeat.inputs:
+  - type: container
+    paths:
+      - '/var/lib/docker/containers/*/*-json.log'
+
+processors:
+  - decode_json_fields:
+      fields: ["message"]
+      target: ""
+      overwrite_keys: true
+      add_error_key: true
+
+  # Keep logs from BOTH application services (HTTP + gRPC); drop everything else.
+  - drop_event:
+      when:
+        not:
+          or:
+            - equals:
+                service.name: "veritas-app"
+            - equals:
+                service.name: "veritas-grpc"
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  index: "veritas-logs-%{+yyyy.MM.dd}"
+
+setup.template.name: "veritas-logs"
+setup.template.pattern: "veritas-logs-*"
+setup.ilm.enabled: false
+
+logging.level: info
+logging.to_files: false
+logging.to_stderr: true

@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: "veritas-app"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["veritas:8000"]
+        labels:
+          service: "veritas-app"
+
+  # NEW (A2): the gRPC service exposes its own metrics endpoint on :9101.
+  - job_name: "veritas-grpc"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["veritas-grpc:9101"]
+        labels:
+          service: "veritas-grpc"
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          service: "host-system"
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

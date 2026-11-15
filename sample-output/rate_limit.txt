@@ -1,0 +1,10 @@
+call 1: HTTP 401  Retry-After=None  body=invalid_credentials
+call 2: HTTP 401  Retry-After=None  body=invalid_credentials
+call 3: HTTP 401  Retry-After=None  body=invalid_credentials
+call 4: HTTP 401  Retry-After=None  body=invalid_credentials
+call 5: HTTP 429  Retry-After=50  body=rate_limited
+call 6: HTTP 429  Retry-After=50  body=rate_limited
+call 7: HTTP 429  Retry-After=50  body=rate_limited
+call 8: HTTP 429  Retry-After=50  body=rate_limited
+waiting 50s (Retry-After) ...
+after waiting: HTTP 401 (allowed again -> 401 is the normal 'bad credentials' answer)

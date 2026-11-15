@@ -1,0 +1,1757 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Veritas API",
+    "description": "Online assessment platform. All errors use {\"error\": {code, message, trace_id, details?}}.",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register a student account",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Log in (rate limited per client IP)",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the caller may retry",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quizzes": {
+      "get": {
+        "tags": [
+          "quizzes"
+        ],
+        "summary": "List/search quizzes",
+        "operationId": "list_quizzes_api_v1_quizzes_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizListOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quizzes/{quiz_id}": {
+      "get": {
+        "tags": [
+          "quizzes"
+        ],
+        "summary": "Get a quiz (correct answers are never included)",
+        "operationId": "get_quiz_api_v1_quizzes__quiz_id__get",
+        "parameters": [
+          {
+            "name": "quiz_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Quiz Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quizzes/{quiz_id}/sessions": {
+      "post": {
+        "tags": [
+          "exam"
+        ],
+        "summary": "Start an exam session",
+        "operationId": "start_session_api_v1_quizzes__quiz_id__sessions_post",
+        "parameters": [
+          {
+            "name": "quiz_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Quiz Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/tab-switches": {
+      "post": {
+        "tags": [
+          "exam"
+        ],
+        "summary": "Record that the student left the exam window",
+        "operationId": "add_tab_switch_api_v1_sessions__session_id__tab_switches_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TabSwitchCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TabSwitchOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{session_id}/attempt": {
+      "put": {
+        "tags": [
+          "exam"
+        ],
+        "summary": "Submit answers (idempotent: safe to retry)",
+        "description": "The session id is the idempotency key. First call -> 201 Created. Repeating with the same answers -> 200 OK with the stored result and `Idempotent-Replay: true`. Repeating with different answers -> 409.",
+        "operationId": "submit_attempt_api_v1_sessions__session_id__attempt_put",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "simulate_anomaly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Simulate Anomaly"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitAttemptRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptOut"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Replay of an already-recorded submission",
+            "headers": {
+              "Idempotent-Replay": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict with current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/attempts": {
+      "get": {
+        "tags": [
+          "attempts"
+        ],
+        "summary": "A student's attempt history",
+        "operationId": "get_history_api_v1_users__user_id__attempts_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/attempts/{attempt_id}": {
+      "get": {
+        "tags": [
+          "attempts"
+        ],
+        "summary": "Per-question review of one's own attempt",
+        "operationId": "review_attempt_api_v1_attempts__attempt_id__get",
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Attempt Id"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/stats": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Platform totals",
+        "operationId": "admin_stats_api_v1_admin_stats_get",
+        "parameters": [
+          {
+            "name": "admin_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Admin Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStats"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/attempts": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "All attempts",
+        "operationId": "admin_all_attempts_api_v1_admin_attempts_get",
+        "parameters": [
+          {
+            "name": "admin_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Admin Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAttemptsOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/quizzes": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List quizzes including correct answers",
+        "operationId": "admin_list_quizzes_api_v1_admin_quizzes_get",
+        "parameters": [
+          {
+            "name": "admin_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Admin Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuizzesOut"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Create a quiz",
+        "operationId": "admin_create_quiz_api_v1_admin_quizzes_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminCreateQuizRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizSummary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/quizzes/{quiz_id}": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Delete a quiz",
+        "operationId": "admin_delete_quiz_api_v1_admin_quizzes__quiz_id__delete",
+        "parameters": [
+          {
+            "name": "quiz_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Quiz Id"
+            }
+          },
+          {
+            "name": "admin_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Admin Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "Not allowed to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/experiments/cardinality": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Cardinality experiment (A1 Part E.2)",
+        "operationId": "run_cardinality_experiment_api_v1_experiments_cardinality_post",
+        "parameters": [
+          {
+            "name": "count",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 20,
+              "title": "Count"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardinalityOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdminAttemptRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "quiz_title": {
+            "type": "string",
+            "title": "Quiz Title"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "cheated"
+            ],
+            "title": "Status"
+          },
+          "tab_switch_count": {
+            "type": "integer",
+            "title": "Tab Switch Count"
+          },
+          "submitted_at": {
+            "type": "string",
+            "title": "Submitted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "quiz_title",
+          "score",
+          "status",
+          "tab_switch_count",
+          "submitted_at"
+        ],
+        "title": "AdminAttemptRow"
+      },
+      "AdminAttemptsOut": {
+        "properties": {
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/AdminAttemptRow"
+            },
+            "type": "array",
+            "title": "Attempts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "attempts"
+        ],
+        "title": "AdminAttemptsOut"
+      },
+      "AdminCreateQuizRequest": {
+        "properties": {
+          "admin_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Admin Id"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "topic": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Topic"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "maximum": 7200.0,
+            "minimum": 30.0,
+            "title": "Duration Seconds",
+            "default": 180
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/AdminQuizQuestion"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "admin_id",
+          "title",
+          "topic",
+          "questions"
+        ],
+        "title": "AdminCreateQuizRequest"
+      },
+      "AdminQuiz": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "title": "Duration Seconds"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/AdminQuizQuestion"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "topic",
+          "duration_seconds",
+          "questions"
+        ],
+        "title": "AdminQuiz"
+      },
+      "AdminQuizQuestion": {
+        "properties": {
+          "q": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Q"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "minItems": 2,
+            "title": "Options"
+          },
+          "answer": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Answer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "q",
+          "options",
+          "answer"
+        ],
+        "title": "AdminQuizQuestion"
+      },
+      "AdminQuizzesOut": {
+        "properties": {
+          "quizzes": {
+            "items": {
+              "$ref": "#/components/schemas/AdminQuiz"
+            },
+            "type": "array",
+            "title": "Quizzes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quizzes"
+        ],
+        "title": "AdminQuizzesOut"
+      },
+      "AdminStats": {
+        "properties": {
+          "total_users": {
+            "type": "integer",
+            "title": "Total Users"
+          },
+          "total_quizzes": {
+            "type": "integer",
+            "title": "Total Quizzes"
+          },
+          "total_attempts": {
+            "type": "integer",
+            "title": "Total Attempts"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status"
+          },
+          "cheating_rate": {
+            "type": "number",
+            "title": "Cheating Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_users",
+          "total_quizzes",
+          "total_attempts",
+          "by_status",
+          "cheating_rate"
+        ],
+        "title": "AdminStats"
+      },
+      "AttemptOut": {
+        "properties": {
+          "attempt_id": {
+            "type": "string",
+            "title": "Attempt Id"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "cheated"
+            ],
+            "title": "Status"
+          },
+          "cheated": {
+            "type": "boolean",
+            "title": "Cheated"
+          },
+          "correct": {
+            "type": "integer",
+            "title": "Correct"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "attempt_id",
+          "score",
+          "status",
+          "cheated",
+          "correct",
+          "total"
+        ],
+        "title": "AttemptOut"
+      },
+      "CardinalityOut": {
+        "properties": {
+          "calls_made": {
+            "type": "integer",
+            "title": "Calls Made"
+          },
+          "using_request_id_label": {
+            "type": "boolean",
+            "title": "Using Request Id Label"
+          },
+          "new_series_created_by_this_call": {
+            "type": "integer",
+            "title": "New Series Created By This Call"
+          },
+          "sample_request_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sample Request Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "calls_made",
+          "using_request_id_label",
+          "new_series_created_by_this_call",
+          "sample_request_ids"
+        ],
+        "title": "CardinalityOut"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "trace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace Id"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody"
+      },
+      "ErrorEnvelope": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorEnvelope"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HistoryItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "quiz_id": {
+            "type": "string",
+            "title": "Quiz Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "cheated"
+            ],
+            "title": "Status"
+          },
+          "tab_switch_count": {
+            "type": "integer",
+            "title": "Tab Switch Count"
+          },
+          "submitted_at": {
+            "type": "string",
+            "title": "Submitted At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "quiz_id",
+          "title",
+          "score",
+          "status",
+          "tab_switch_count",
+          "submitted_at"
+        ],
+        "title": "HistoryItem"
+      },
+      "HistoryOut": {
+        "properties": {
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryItem"
+            },
+            "type": "array",
+            "title": "Attempts"
+          },
+          "average_score": {
+            "type": "number",
+            "title": "Average Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "attempts",
+          "average_score"
+        ],
+        "title": "HistoryOut"
+      },
+      "LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "QuizDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "title": "Duration Seconds"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuizQuestionPublic"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "topic",
+          "duration_seconds",
+          "questions"
+        ],
+        "title": "QuizDetail"
+      },
+      "QuizListOut": {
+        "properties": {
+          "quizzes": {
+            "items": {
+              "$ref": "#/components/schemas/QuizSummary"
+            },
+            "type": "array",
+            "title": "Quizzes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quizzes"
+        ],
+        "title": "QuizListOut"
+      },
+      "QuizQuestionPublic": {
+        "properties": {
+          "q": {
+            "type": "string",
+            "title": "Q"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "q",
+          "options"
+        ],
+        "title": "QuizQuestionPublic"
+      },
+      "QuizSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "title": "Duration Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "topic",
+          "duration_seconds"
+        ],
+        "title": "QuizSummary"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 3,
+            "pattern": "^[A-Za-z0-9_.-]+$",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 6,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "RegisterRequest"
+      },
+      "ReviewOut": {
+        "properties": {
+          "quiz_title": {
+            "type": "string",
+            "title": "Quiz Title"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "cheated"
+            ],
+            "title": "Status"
+          },
+          "tab_switch_count": {
+            "type": "integer",
+            "title": "Tab Switch Count"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewQuestion"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quiz_title",
+          "score",
+          "status",
+          "tab_switch_count",
+          "questions"
+        ],
+        "title": "ReviewOut"
+      },
+      "ReviewQuestion": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Options"
+          },
+          "correct_index": {
+            "type": "integer",
+            "title": "Correct Index"
+          },
+          "selected_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Index"
+          },
+          "is_correct": {
+            "type": "boolean",
+            "title": "Is Correct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "options",
+          "correct_index",
+          "is_correct"
+        ],
+        "title": "ReviewQuestion"
+      },
+      "SessionCreate": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "SessionCreate"
+      },
+      "SessionOut": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "quiz_id": {
+            "type": "string",
+            "title": "Quiz Id"
+          },
+          "started_at": {
+            "type": "string",
+            "title": "Started At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "quiz_id",
+          "started_at"
+        ],
+        "title": "SessionOut"
+      },
+      "SubmitAttemptRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "User Id"
+          },
+          "answers": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Answers",
+            "description": "question index -> chosen option index"
+          },
+          "tab_switch_count": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Tab Switch Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "SubmitAttemptRequest"
+      },
+      "TabSwitchCreate": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "TabSwitchCreate"
+      },
+      "TabSwitchOut": {
+        "properties": {
+          "tab_switch_count": {
+            "type": "integer",
+            "title": "Tab Switch Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tab_switch_count"
+        ],
+        "title": "TabSwitchOut"
+      },
+      "UserOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "is_admin": {
+            "type": "boolean",
+            "title": "Is Admin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "username",
+          "is_admin"
+        ],
+        "title": "UserOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
