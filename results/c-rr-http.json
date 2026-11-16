@@ -1,0 +1,35 @@
+{
+  "label": "C rr",
+  "interface": "http",
+  "started_utc": "2026-11-15T10:11:32Z",
+  "target_rps": 30.0,
+  "duration_s": 90.0,
+  "sent": 2700,
+  "achieved_send_rps": 30.01,
+  "max_send_lag_ms": 435.2,
+  "success": 2700,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "client_p50_ms": 21.7,
+  "client_p95_ms": 242.6,
+  "client_p99_ms": 765.8,
+  "client_p95_all_ms": 242.6,
+  "outcomes": {
+    "HTTP 200": 2700
+  },
+  "replica_counts": {
+    "C": 900,
+    "A": 900,
+    "B": 900
+  },
+  "replica_share_pct": {
+    "A": 33.3,
+    "B": 33.3,
+    "C": 33.3
+  },
+  "sample_trace_ids": {
+    "C": "8f32d187c7b5474f82a92594bd0cebd4",
+    "A": "87ca33066a014c4b9601b127e211d577",
+    "B": "d6f27f6d60e647548b887875b2708ca4"
+  }
+}

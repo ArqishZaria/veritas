@@ -6,7 +6,7 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _tmp = tempfile.mkdtemp()
 os.environ.update(VERITAS_DB_PATH=os.path.join(_tmp, "test.db"), SEED_DEMO_DATA="false",
-                  ENABLE_FAULT_INJECTION="true", LOGIN_RATE_LIMIT="5", SERVICE_NAME="veritas-test")
+                  ENABLE_FAULT_INJECTION="true", LOGIN_RATE_LIMIT="5", SERVICE_NAME="veritas-test", REPLICA_ID="test")
 GEN = os.path.join(ROOT, "gen")
 if not os.path.exists(os.path.join(GEN, "veritas/exam/v1/exam_pb2.py")):
     os.makedirs(GEN, exist_ok=True)

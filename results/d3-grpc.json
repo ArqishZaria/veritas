@@ -1,0 +1,37 @@
+{
+  "label": "D3 failure: stop B at +25.0s, start at +55.0s",
+  "interface": "grpc",
+  "started_utc": "2026-11-16T03:52:16Z",
+  "target_rps": 30.0,
+  "duration_s": 90.0,
+  "sent": 2700,
+  "achieved_send_rps": 30.01,
+  "max_send_lag_ms": 218.4,
+  "success": 2676,
+  "failed": 24,
+  "error_rate_pct": 0.89,
+  "client_p50_ms": 13.6,
+  "client_p95_ms": 45.2,
+  "client_p99_ms": 423.7,
+  "client_p95_all_ms": 51.0,
+  "outcomes": {
+    "OK": 2676,
+    "UNAVAILABLE": 24
+  },
+  "replica_counts": {
+    "C": 1082,
+    "A": 1081,
+    "B": 513
+  },
+  "replica_share_pct": {
+    "A": 40.4,
+    "B": 19.2,
+    "C": 40.4
+  },
+  "sample_trace_ids": {
+    "C": "656267ac522b4a6c881245cb948d5e4a",
+    "A": "73b6105f56694996aceee414399dafbc",
+    "B": "70f0836435af4093ae14535d9c50f796",
+    "failed": "cf8472f902684ba696570d30b4723290"
+  }
+}

@@ -10,7 +10,7 @@ processors:
       overwrite_keys: true
       add_error_key: true
 
-  # Keep logs from BOTH application services (HTTP + gRPC); drop everything else.
+  # A3: keep logs from the replicas (HTTP + gRPC, field replica.id) and from Envoy's JSON access log.
   - drop_event:
       when:
         not:
@@ -19,6 +19,8 @@ processors:
                 service.name: "veritas-app"
             - equals:
                 service.name: "veritas-grpc"
+            - equals:
+                service.name: "veritas-envoy"
 
 output.elasticsearch:
   hosts: ["elasticsearch:9200"]

@@ -17,17 +17,19 @@ from prometheus_client import (CONTENT_TYPE_LATEST, REGISTRY, Counter, Gauge, Hi
                                Summary, generate_latest)
 
 from app import errors
-from app.core import exam, metrics
+from app.core import chaos, exam, metrics
 from app.core.db import get_db, init_db, now_iso
-from app.core.logging_ecs import SERVICE_NAME, ecs_log, is_valid_trace_id, new_trace_id
+from app.core.logging_ecs import REPLICA_ID, SERVICE_NAME, ecs_log, is_valid_trace_id, new_trace_id
 from app.errors import ApiError, error_body, from_domain
-from app.ratelimit import SlidingWindowLimiter
+from app.ratelimit import DbSlidingWindowLimiter, SlidingWindowLimiter
 
 SEED_DEMO_DATA = os.environ.get("SEED_DEMO_DATA", "true").lower() != "false"
 ENABLE_FAULT_INJECTION = os.environ.get("ENABLE_FAULT_INJECTION", "false").lower() == "true"
 CARDINALITY_DEMO_USE_LABEL = os.environ.get("CARDINALITY_DEMO_USE_LABEL", "false").lower() == "true"
 LOGIN_RATE_LIMIT = int(os.environ.get("LOGIN_RATE_LIMIT", "5"))
 LOGIN_RATE_WINDOW = float(os.environ.get("LOGIN_RATE_WINDOW", "60"))
+ENABLE_GRPC = os.environ.get("ENABLE_GRPC", "false").lower() == "true"      # A3: gRPC server inside the same process
+RATE_LIMIT_BACKEND = os.environ.get("RATE_LIMIT_BACKEND", "db").lower()      # A3: "db" (shared) | "memory" (per replica)
 
 # ---------------------------------------------------------------------------
 # METRICS (HTTP layer). Business metrics live in app/core/metrics.py.
@@ -44,7 +46,7 @@ HTTP_DURATION_SECONDS = Histogram(
 HTTP_IN_FLIGHT = Gauge("veritas_http_requests_in_flight", "HTTP requests currently being handled.")
 RATE_LIMITED_TOTAL = Counter("veritas_rate_limited_total", "Requests rejected with 429.", ["endpoint"])
 APP_INFO = Info("veritas_app", "Static build metadata for the Veritas service.")
-APP_INFO.info({"version": "2.0.0", "service": SERVICE_NAME})
+APP_INFO.info({"version": "2.0.0", "service": SERVICE_NAME, "replica": REPLICA_ID})
 REGISTRY.register(metrics.DbStateCollector())
 
 if CARDINALITY_DEMO_USE_LABEL:
@@ -259,7 +261,15 @@ async def lifespan(app: FastAPI):
     await asyncio.to_thread(init_db)
     if SEED_DEMO_DATA:
         await asyncio.to_thread(seed_demo_data)
+    grpc_server = None
+    if ENABLE_GRPC:  # A3: every replica serves HTTP (uvicorn) and gRPC (same process, same metrics registry)
+        from grpc_service.server import build_server
+        grpc_server, grpc_port = build_server()
+        grpc_server.start()
+        ecs_log("info", f"gRPC ExamService listening on :{grpc_port}", event_action="grpc_started")
     yield
+    if grpc_server is not None:
+        grpc_server.stop(5)
 
 
 app = FastAPI(title="Veritas API", version="2.0.0", lifespan=lifespan,
@@ -267,7 +277,8 @@ app = FastAPI(title="Veritas API", version="2.0.0", lifespan=lifespan,
 errors.install(app)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
-login_limiter = SlidingWindowLimiter(LOGIN_RATE_LIMIT, LOGIN_RATE_WINDOW)
+login_limiter = (SlidingWindowLimiter if RATE_LIMIT_BACKEND == "memory" else DbSlidingWindowLimiter)(
+    LOGIN_RATE_LIMIT, LOGIN_RATE_WINDOW)
 FAULT = {"mode": "off", "remaining": 0, "delay_seconds": 0.0}
 
 
@@ -282,6 +293,10 @@ async def observability_middleware(request: Request, call_next):
         HTTP_IN_FLIGHT.inc()
     try:
         try:
+            if tracked and not request.url.path.startswith("/internal"):
+                delay = chaos.get_delay_s()  # A3 experiment hook; /health and /metrics are never delayed
+                if delay:
+                    await asyncio.sleep(delay)
             response = await call_next(request)
         except Exception:
             ecs_log("error", "Unhandled exception", trace_id=trace_id, event_action="unhandled_exception",
@@ -299,6 +314,7 @@ async def observability_middleware(request: Request, call_next):
         HTTP_REQUESTS_TOTAL.labels(method=request.method, route=route, status=str(response.status_code)).inc()
         HTTP_DURATION_SECONDS.labels(method=request.method, route=route).observe(duration)
     response.headers["X-Trace-Id"] = trace_id
+    response.headers["X-Replica-Id"] = REPLICA_ID
     return response
 
 
@@ -369,12 +385,13 @@ def list_quizzes(search: Optional[str] = Query(None, max_length=100)):
 
 @router.get("/quizzes/{quiz_id}", response_model=QuizDetail, tags=["quizzes"],
             summary="Get a quiz (correct answers are never included)", responses=errs(404))
-def get_quiz(quiz_id: str):
+def get_quiz(quiz_id: str, request: Request):
     with get_db() as conn:
         row = conn.execute("SELECT * FROM quizzes WHERE id = ?", (quiz_id,)).fetchone()
     if not row:
         raise ApiError(404, "not_found", "Quiz not found")
     qs = [{"q": q["q"], "options": q["options"]} for q in json.loads(row["questions_json"])]
+    ecs_log("info", "Quiz served", trace_id=request.state.trace_id, event_action="quiz_served", **{"quiz.id": quiz_id})
     return {"id": row["id"], "title": row["title"], "topic": row["topic"],
             "duration_seconds": row["duration_seconds"], "questions": qs}
 
@@ -566,6 +583,16 @@ def run_cardinality_experiment(count: int = Query(20, ge=1, le=500)):
 app.include_router(router)
 
 
+@app.put("/internal/delay", include_in_schema=False)
+async def internal_delay(delay_ms: float = Query(0, ge=0, le=10000)):
+    """A3 experiment hook: add a fixed delay to every API call on THIS replica (call it on the replica's
+    direct port, not through Envoy -- Envoy answers 404 for /internal)."""
+    if not ENABLE_FAULT_INJECTION:
+        raise ApiError(404, "not_found", "Not found")
+    chaos.set_delay_ms(delay_ms)
+    return {"replica": REPLICA_ID, "delay_ms": delay_ms}
+
+
 # ------------------------------- NON-API -----------------------------------
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def index(request: Request):
@@ -579,7 +606,7 @@ async def metrics_endpoint():
 
 @app.get("/health", include_in_schema=False)
 async def health():
-    return {"status": "ok", "service": SERVICE_NAME}
+    return {"status": "ok", "service": SERVICE_NAME, "replica": REPLICA_ID}
 
 
 # ------------------------------- DEMO SEED ---------------------------------

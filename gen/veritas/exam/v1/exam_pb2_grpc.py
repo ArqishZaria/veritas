@@ -40,6 +40,11 @@ class ExamServiceStub(object):
                 request_serializer=veritas_dot_exam_dot_v1_dot_exam__pb2.SubmitExamRequest.SerializeToString,
                 response_deserializer=veritas_dot_exam_dot_v1_dot_exam__pb2.SubmitExamResponse.FromString,
                 _registered_method=True)
+        self.GetQuiz = channel.unary_unary(
+                '/veritas.exam.v1.ExamService/GetQuiz',
+                request_serializer=veritas_dot_exam_dot_v1_dot_exam__pb2.GetQuizRequest.SerializeToString,
+                response_deserializer=veritas_dot_exam_dot_v1_dot_exam__pb2.GetQuizResponse.FromString,
+                _registered_method=True)
 
 
 class ExamServiceServicer(object):
@@ -52,6 +57,13 @@ class ExamServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetQuiz(self, request, context):
+        """A3: read-only unary call (same data as GET /api/v1/quizzes/{id}); used as load-balancing test traffic.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ExamServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -59,6 +71,11 @@ def add_ExamServiceServicer_to_server(servicer, server):
                     servicer.SubmitExam,
                     request_deserializer=veritas_dot_exam_dot_v1_dot_exam__pb2.SubmitExamRequest.FromString,
                     response_serializer=veritas_dot_exam_dot_v1_dot_exam__pb2.SubmitExamResponse.SerializeToString,
+            ),
+            'GetQuiz': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetQuiz,
+                    request_deserializer=veritas_dot_exam_dot_v1_dot_exam__pb2.GetQuizRequest.FromString,
+                    response_serializer=veritas_dot_exam_dot_v1_dot_exam__pb2.GetQuizResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -89,6 +106,33 @@ class ExamService(object):
             '/veritas.exam.v1.ExamService/SubmitExam',
             veritas_dot_exam_dot_v1_dot_exam__pb2.SubmitExamRequest.SerializeToString,
             veritas_dot_exam_dot_v1_dot_exam__pb2.SubmitExamResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetQuiz(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/veritas.exam.v1.ExamService/GetQuiz',
+            veritas_dot_exam_dot_v1_dot_exam__pb2.GetQuizRequest.SerializeToString,
+            veritas_dot_exam_dot_v1_dot_exam__pb2.GetQuizResponse.FromString,
             options,
             channel_credentials,
             insecure,

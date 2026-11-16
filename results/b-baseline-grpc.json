@@ -1,0 +1,29 @@
+{
+  "label": "B baseline",
+  "interface": "grpc",
+  "started_utc": "2026-11-15T09:51:59Z",
+  "target_rps": 30.0,
+  "duration_s": 90.0,
+  "sent": 2700,
+  "achieved_send_rps": 30.0,
+  "max_send_lag_ms": 119.7,
+  "success": 2700,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "client_p50_ms": 12.9,
+  "client_p95_ms": 62.8,
+  "client_p99_ms": 187.9,
+  "client_p95_all_ms": 62.8,
+  "outcomes": {
+    "OK": 2700
+  },
+  "replica_counts": {
+    "A": 2700
+  },
+  "replica_share_pct": {
+    "A": 100.0
+  },
+  "sample_trace_ids": {
+    "A": "d8a7b0758ccb448cace1514af195b0e4"
+  }
+}

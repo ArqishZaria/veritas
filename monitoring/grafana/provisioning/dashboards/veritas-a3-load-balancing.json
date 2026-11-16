@@ -1,0 +1,1084 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "HTTP  GET /api/v1/quizzes/{quiz_id}  (per replica)",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "HTTP request rate per replica",
+      "description": "rate(...[1m]) per replica, scraped directly from each replica.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (replica) (rate(veritas_http_requests_total{route=\"/api/v1/quizzes/{quiz_id}\"}[1m]))",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "HTTP share of total traffic (%)",
+      "description": "Replica rate / total rate. Round robin target: 33.3% each (50/25/25 for weights 2:1:1).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by (replica) (rate(veritas_http_requests_total{route=\"/api/v1/quizzes/{quiz_id}\"}[1m])) / scalar(sum(rate(veritas_http_requests_total{route=\"/api/v1/quizzes/{quiz_id}\"}[1m])))",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "HTTP active requests per replica",
+      "description": "All HTTP requests in flight on that replica (the test route is the only traffic).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "veritas_http_requests_in_flight",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "HTTP p50 latency per replica",
+      "description": "Server-side, histogram_quantile over a 1m rate() window (includes any injected delay).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le, replica) (rate(veritas_http_request_duration_seconds_bucket{route=\"/api/v1/quizzes/{quiz_id}\"}[1m])))",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "HTTP p95 latency per replica",
+      "description": "Same, 95th percentile; 1m window.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 9,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, replica) (rate(veritas_http_request_duration_seconds_bucket{route=\"/api/v1/quizzes/{quiz_id}\"}[1m])))",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "HTTP errors by status per replica",
+      "description": "Non-success responses only; empty = no errors. (A stopped replica has no series: see Envoy row.)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 9,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (replica, status) (rate(veritas_http_requests_total{route=\"/api/v1/quizzes/{quiz_id}\",status!~\"2..\"}[1m]))",
+          "legendFormat": "{{replica}} {{status}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "row",
+      "title": "gRPC  ExamService/GetQuiz  (per replica)",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "gRPC request rate per replica",
+      "description": "rate(...[1m]) per replica, scraped directly from each replica.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (replica) (rate(veritas_grpc_server_handled_total{grpc_method=\"GetQuiz\"}[1m]))",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "gRPC share of total traffic (%)",
+      "description": "Replica rate / total rate. Round robin target: 33.3% each (50/25/25 for weights 2:1:1).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 18,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by (replica) (rate(veritas_grpc_server_handled_total{grpc_method=\"GetQuiz\"}[1m])) / scalar(sum(rate(veritas_grpc_server_handled_total{grpc_method=\"GetQuiz\"}[1m])))",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "gRPC active requests per replica",
+      "description": "Requests currently being handled (gauge).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 18,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "veritas_grpc_server_in_flight{grpc_method=\"GetQuiz\"}",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "gRPC p50 latency per replica",
+      "description": "Server-side, histogram_quantile over a 1m rate() window (includes any injected delay).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le, replica) (rate(veritas_grpc_server_handling_seconds_bucket{grpc_method=\"GetQuiz\"}[1m])))",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "gRPC p95 latency per replica",
+      "description": "Same, 95th percentile; 1m window.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, replica) (rate(veritas_grpc_server_handling_seconds_bucket{grpc_method=\"GetQuiz\"}[1m])))",
+          "legendFormat": "{{replica}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "gRPC errors by status per replica",
+      "description": "Non-success responses only; empty = no errors. (A stopped replica has no series: see Envoy row.)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (replica, grpc_code) (rate(veritas_grpc_server_handled_total{grpc_method=\"GetQuiz\",grpc_code!=\"OK\"}[1m]))",
+          "legendFormat": "{{replica}} {{grpc_code}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Envoy (scraped directly on :9901)",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 1
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Envoy upstream requests/s by cluster",
+      "description": "Requests Envoy sent upstream, per cluster.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (envoy_cluster_name) (rate(envoy_cluster_upstream_rq_total{envoy_cluster_name=~\"http_backend|grpc_backend\"}[1m]))",
+          "legendFormat": "{{envoy_cluster_name}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Envoy upstream responses by class",
+      "description": "Responses Envoy saw from replicas (5xx incl. connect failures while a replica is down but not yet removed).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 35,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (envoy_cluster_name, envoy_response_code_class) (rate(envoy_cluster_upstream_rq_xx{envoy_cluster_name=~\"http_backend|grpc_backend\"}[1m]))",
+          "legendFormat": "{{envoy_cluster_name}} {{envoy_response_code_class}}xx",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Envoy healthy members",
+      "description": "Hosts Envoy currently sends traffic to (active health checking).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 35,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "envoy_cluster_membership_healthy{envoy_cluster_name=~\"http_backend|grpc_backend\"}",
+          "legendFormat": "{{envoy_cluster_name}} healthy",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        },
+        {
+          "expr": "envoy_cluster_membership_total{envoy_cluster_name=~\"http_backend|grpc_backend\"}",
+          "legendFormat": "{{envoy_cluster_name}} total",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Envoy active upstream requests",
+      "description": "In-flight requests Envoy has open to all replicas.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (envoy_cluster_name) (envoy_cluster_upstream_rq_active{envoy_cluster_name=~\"http_backend|grpc_backend\"})",
+          "legendFormat": "{{envoy_cluster_name}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Envoy health-check results/s",
+      "description": "Only non-zero when the `health` scenario is loaded.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 43,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (envoy_cluster_name) (rate(envoy_cluster_health_check_success{envoy_cluster_name=~\"http_backend|grpc_backend\"}[1m]))",
+          "legendFormat": "{{envoy_cluster_name}} ok",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        },
+        {
+          "expr": "sum by (envoy_cluster_name) (rate(envoy_cluster_health_check_failure{envoy_cluster_name=~\"http_backend|grpc_backend\"}[1m]))",
+          "legendFormat": "{{envoy_cluster_name}} failed",
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Envoy downstream requests/s by listener",
+      "description": "http_ingress / grpc_ingress = client-facing listeners.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "veritas-prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 43,
+        "w": 8,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum by (envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_total[1m]))",
+          "legendFormat": "{{envoy_http_conn_manager_prefix}}",
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "veritas-prometheus"
+          }
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "veritas",
+    "a3",
+    "envoy"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Veritas A3 Load Balancing",
+  "uid": "veritas-a3-lb",
+  "version": 1,
+  "weekStart": ""
+}

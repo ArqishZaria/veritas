@@ -53,6 +53,9 @@ SCHEMA = [
         quiz_id TEXT NOT NULL, score REAL NOT NULL, status TEXT NOT NULL,
         tab_switch_count INTEGER NOT NULL, correct INTEGER NOT NULL, total INTEGER NOT NULL,
         answers_json TEXT NOT NULL DEFAULT '{}', submitted_at TEXT NOT NULL)""",
+    # A3: rate-limit hits live in the shared DB so all replicas see the same counters
+    """CREATE TABLE IF NOT EXISTS rate_limit_hits (key TEXT NOT NULL, ts REAL NOT NULL)""",
+    "CREATE INDEX IF NOT EXISTS idx_rate_limit_key_ts ON rate_limit_hits (key, ts)",
 ]
 
 SEED_QUIZZES = [

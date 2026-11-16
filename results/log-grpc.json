@@ -1,0 +1,35 @@
+{
+  "label": "log evidence",
+  "interface": "grpc",
+  "started_utc": "2026-11-16T04:03:41Z",
+  "target_rps": 10.0,
+  "duration_s": 60.0,
+  "sent": 600,
+  "achieved_send_rps": 10.02,
+  "max_send_lag_ms": 0.0,
+  "success": 600,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "client_p50_ms": 12.3,
+  "client_p95_ms": 66.1,
+  "client_p99_ms": 315.8,
+  "client_p95_all_ms": 66.1,
+  "outcomes": {
+    "OK": 600
+  },
+  "replica_counts": {
+    "B": 200,
+    "A": 200,
+    "C": 200
+  },
+  "replica_share_pct": {
+    "A": 33.3,
+    "B": 33.3,
+    "C": 33.3
+  },
+  "sample_trace_ids": {
+    "B": "4c81127146a4477aa9aeef7dffb81aa1",
+    "A": "30d40d01c06c4e29994abb1a10395f6f",
+    "C": "4be3049acf0245a39323866815f05609"
+  }
+}

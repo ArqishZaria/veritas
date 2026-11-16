@@ -1,0 +1,35 @@
+{
+  "label": "D1 weighted",
+  "interface": "http",
+  "started_utc": "2026-11-15T10:16:00Z",
+  "target_rps": 30.0,
+  "duration_s": 90.0,
+  "sent": 2700,
+  "achieved_send_rps": 30.01,
+  "max_send_lag_ms": 109.1,
+  "success": 2700,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "client_p50_ms": 19.9,
+  "client_p95_ms": 63.3,
+  "client_p99_ms": 140.2,
+  "client_p95_all_ms": 63.3,
+  "outcomes": {
+    "HTTP 200": 2700
+  },
+  "replica_counts": {
+    "B": 675,
+    "A": 1350,
+    "C": 675
+  },
+  "replica_share_pct": {
+    "A": 50.0,
+    "B": 25.0,
+    "C": 25.0
+  },
+  "sample_trace_ids": {
+    "B": "2a9c55fe50b340798c86e51faa2aa9a8",
+    "A": "b7e5ec00ca1b42ab87c69eb5a541611a",
+    "C": "f9c6791fb0a74e9e9d4402c236367745"
+  }
+}

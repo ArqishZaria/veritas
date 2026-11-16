@@ -58,3 +58,17 @@ def test_grpc_metrics_recorded(stub, student, session_for):
     assert 'veritas_grpc_server_handled_total{grpc_code="OK",grpc_method="SubmitExam"}' in text
     assert 'grpc_code="NOT_FOUND"' in text
     assert "veritas_grpc_server_handling_seconds_bucket" in text
+
+
+def test_get_quiz_read_only_call_reports_replica(stub):
+    from veritas.exam.v1 import exam_pb2
+    r, call = stub.GetQuiz.with_call(exam_pb2.GetQuizRequest(quiz_id="python_101"), timeout=3,
+                                     metadata=(("x-trace-id", "b" * 32),))
+    assert r.question_count == 5 and r.replica_id == "test"
+    assert dict(call.initial_metadata())["x-replica-id"] == "test"
+    with pytest.raises(grpc.RpcError) as e:
+        stub.GetQuiz(exam_pb2.GetQuizRequest(quiz_id="nope"), timeout=3)
+    assert e.value.code() == grpc.StatusCode.NOT_FOUND
+    with pytest.raises(grpc.RpcError) as e:
+        stub.GetQuiz(exam_pb2.GetQuizRequest(), timeout=3)
+    assert e.value.code() == grpc.StatusCode.INVALID_ARGUMENT

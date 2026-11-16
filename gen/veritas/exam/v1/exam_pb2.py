@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1averitas/exam/v1/exam.proto\x12\x0fveritas.exam.v1\"\xde\x01\n\x11SubmitExamRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12@\n\x07\x61nswers\x18\x03 \x03(\x0b\x32/.veritas.exam.v1.SubmitExamRequest.AnswersEntry\x12\x18\n\x10tab_switch_count\x18\x04 \x01(\x05\x12\x18\n\x10simulate_anomaly\x18\x05 \x01(\x08\x1a.\n\x0c\x41nswersEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"\x8a\x01\n\x12SubmitExamResponse\x12\x12\n\nattempt_id\x18\x01 \x01(\t\x12\r\n\x05score\x18\x02 \x01(\x01\x12\x0e\n\x06status\x18\x03 \x01(\t\x12\x0f\n\x07\x63heated\x18\x04 \x01(\x08\x12\x0f\n\x07\x63orrect\x18\x05 \x01(\x05\x12\r\n\x05total\x18\x06 \x01(\x05\x12\x10\n\x08replayed\x18\x07 \x01(\x08\x32\x64\n\x0b\x45xamService\x12U\n\nSubmitExam\x12\".veritas.exam.v1.SubmitExamRequest\x1a#.veritas.exam.v1.SubmitExamResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1averitas/exam/v1/exam.proto\x12\x0fveritas.exam.v1\"\xde\x01\n\x11SubmitExamRequest\x12\x12\n\nsession_id\x18\x01 \x01(\t\x12\x0f\n\x07user_id\x18\x02 \x01(\t\x12@\n\x07\x61nswers\x18\x03 \x03(\x0b\x32/.veritas.exam.v1.SubmitExamRequest.AnswersEntry\x12\x18\n\x10tab_switch_count\x18\x04 \x01(\x05\x12\x18\n\x10simulate_anomaly\x18\x05 \x01(\x08\x1a.\n\x0c\x41nswersEntry\x12\x0b\n\x03key\x18\x01 \x01(\x05\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"\x8a\x01\n\x12SubmitExamResponse\x12\x12\n\nattempt_id\x18\x01 \x01(\t\x12\r\n\x05score\x18\x02 \x01(\x01\x12\x0e\n\x06status\x18\x03 \x01(\t\x12\x0f\n\x07\x63heated\x18\x04 \x01(\x08\x12\x0f\n\x07\x63orrect\x18\x05 \x01(\x05\x12\r\n\x05total\x18\x06 \x01(\x05\x12\x10\n\x08replayed\x18\x07 \x01(\x08\"!\n\x0eGetQuizRequest\x12\x0f\n\x07quiz_id\x18\x01 \x01(\t\"\x86\x01\n\x0fGetQuizResponse\x12\x0f\n\x07quiz_id\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\r\n\x05topic\x18\x03 \x01(\t\x12\x18\n\x10\x64uration_seconds\x18\x04 \x01(\x05\x12\x16\n\x0equestion_count\x18\x05 \x01(\x05\x12\x12\n\nreplica_id\x18\x06 \x01(\t2\xb2\x01\n\x0b\x45xamService\x12U\n\nSubmitExam\x12\".veritas.exam.v1.SubmitExamRequest\x1a#.veritas.exam.v1.SubmitExamResponse\x12L\n\x07GetQuiz\x12\x1f.veritas.exam.v1.GetQuizRequest\x1a .veritas.exam.v1.GetQuizResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -39,6 +39,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_SUBMITEXAMREQUEST_ANSWERSENTRY']._serialized_end=270
   _globals['_SUBMITEXAMRESPONSE']._serialized_start=273
   _globals['_SUBMITEXAMRESPONSE']._serialized_end=411
-  _globals['_EXAMSERVICE']._serialized_start=413
-  _globals['_EXAMSERVICE']._serialized_end=513
+  _globals['_GETQUIZREQUEST']._serialized_start=413
+  _globals['_GETQUIZREQUEST']._serialized_end=446
+  _globals['_GETQUIZRESPONSE']._serialized_start=449
+  _globals['_GETQUIZRESPONSE']._serialized_end=583
+  _globals['_EXAMSERVICE']._serialized_start=586
+  _globals['_EXAMSERVICE']._serialized_end=764
 # @@protoc_insertion_point(module_scope)

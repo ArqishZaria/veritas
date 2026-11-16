@@ -1,0 +1,37 @@
+{
+  "label": "D3 failure: stop B at +25.0s, start at +55.0s",
+  "interface": "http",
+  "started_utc": "2026-11-16T03:57:41Z",
+  "target_rps": 30.0,
+  "duration_s": 90.0,
+  "sent": 2700,
+  "achieved_send_rps": 30.01,
+  "max_send_lag_ms": 161.5,
+  "success": 2643,
+  "failed": 57,
+  "error_rate_pct": 2.11,
+  "client_p50_ms": 19.3,
+  "client_p95_ms": 43.3,
+  "client_p99_ms": 88.9,
+  "client_p95_all_ms": 48.3,
+  "outcomes": {
+    "HTTP 200": 2643,
+    "HTTP 503": 57
+  },
+  "replica_counts": {
+    "B": 521,
+    "C": 1061,
+    "A": 1061
+  },
+  "replica_share_pct": {
+    "A": 40.1,
+    "B": 19.7,
+    "C": 40.1
+  },
+  "sample_trace_ids": {
+    "B": "c6310980d8a84427b5021ba57ec7f478",
+    "C": "658dce0f673847d6a083b315ecdf51c9",
+    "A": "d11f4ee4c1944dd99a998e76438a41ef",
+    "failed": "32f84aa4acc4421ba8cb49a1df3baf02"
+  }
+}

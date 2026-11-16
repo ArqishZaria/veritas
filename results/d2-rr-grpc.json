@@ -1,0 +1,35 @@
+{
+  "label": "D2 rr + B 300ms",
+  "interface": "grpc",
+  "started_utc": "2026-11-15T10:23:15Z",
+  "target_rps": 30.0,
+  "duration_s": 90.0,
+  "sent": 2700,
+  "achieved_send_rps": 30.01,
+  "max_send_lag_ms": 215.0,
+  "success": 2700,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "client_p50_ms": 28.2,
+  "client_p95_ms": 335.0,
+  "client_p99_ms": 379.6,
+  "client_p95_all_ms": 335.0,
+  "outcomes": {
+    "OK": 2700
+  },
+  "replica_counts": {
+    "C": 900,
+    "A": 900,
+    "B": 900
+  },
+  "replica_share_pct": {
+    "A": 33.3,
+    "B": 33.3,
+    "C": 33.3
+  },
+  "sample_trace_ids": {
+    "C": "21615d33495d4ed88eb07f69d076b086",
+    "A": "2c9d75c976c3402088375d9aa9a4a6c4",
+    "B": "189c6a0727ef44d5827f2fe00e6f4a22"
+  }
+}

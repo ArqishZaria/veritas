@@ -8,6 +8,7 @@ import uuid
 from datetime import datetime, timezone
 
 SERVICE_NAME = os.environ.get("SERVICE_NAME", "veritas-app")
+REPLICA_ID = os.environ.get("REPLICA_ID", "standalone")  # A3: which replica produced the log line
 _TRACE_RE = re.compile(r"^[0-9a-f]{32}$")
 
 
@@ -18,6 +19,7 @@ class ECSJsonFormatter(logging.Formatter):
             "log.level": getattr(record, "ecs_level", record.levelname.lower()),
             "message": record.getMessage(),
             "service.name": SERVICE_NAME,
+            "replica.id": REPLICA_ID,
             "trace.id": getattr(record, "trace_id", None),
             "event.action": getattr(record, "event_action", None),
             "event.duration": getattr(record, "event_duration", None),

@@ -5,6 +5,8 @@ package veritas.exam.v1;
 // Same business rules and database as PUT /api/v1/sessions/{session_id}/attempt.
 service ExamService {
   rpc SubmitExam(SubmitExamRequest) returns (SubmitExamResponse);
+  // A3: read-only unary call (same data as GET /api/v1/quizzes/{id}); used as load-balancing test traffic.
+  rpc GetQuiz(GetQuizRequest) returns (GetQuizResponse);
 }
 
 message SubmitExamRequest {
@@ -25,6 +27,15 @@ message SubmitExamResponse {
   bool replayed = 7;                     // true when an earlier identical submit was returned
 }
 
+message GetQuizRequest {
+  string quiz_id = 1;
+}
 
-
-
+message GetQuizResponse {
+  string quiz_id = 1;
+  string title = 2;
+  string topic = 3;
+  int32 duration_seconds = 4;
+  int32 question_count = 5;              // correct answers are never returned
+  string replica_id = 6;                 // which replica served this call (also sent as x-replica-id metadata)
+}

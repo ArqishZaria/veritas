@@ -3,20 +3,24 @@ global:
   evaluation_interval: 5s
 
 scrape_configs:
+  # A3: every replica is scraped DIRECTLY on its own address (never through Envoy).
+  # Each replica exposes HTTP *and* gRPC metrics on :8000/metrics (one process); the `replica` label comes from here.
   - job_name: "veritas-app"
     metrics_path: /metrics
     static_configs:
-      - targets: ["veritas:8000"]
-        labels:
-          service: "veritas-app"
+      - targets: ["veritas-a:8000"]
+        labels: {service: "veritas-app", replica: "A"}
+      - targets: ["veritas-b:8000"]
+        labels: {service: "veritas-app", replica: "B"}
+      - targets: ["veritas-c:8000"]
+        labels: {service: "veritas-app", replica: "C"}
 
-  # NEW (A2): the gRPC service exposes its own metrics endpoint on :9101.
-  - job_name: "veritas-grpc"
-    metrics_path: /metrics
+  # A3: Envoy's own metrics (listeners, clusters, health checks).
+  - job_name: "envoy"
+    metrics_path: /stats/prometheus
     static_configs:
-      - targets: ["veritas-grpc:9101"]
-        labels:
-          service: "veritas-grpc"
+      - targets: ["envoy:9901"]
+        labels: {service: "envoy"}
 
   - job_name: "node-exporter"
     static_configs:

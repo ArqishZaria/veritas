@@ -3,72 +3,123 @@ version: "3.9"
 networks:
   veritas-net:
     driver: bridge
+    ipam:
+      config:
+        # A3: replicas get fixed addresses (.11/.12/.13) so Envoy can use STATIC endpoints; Docker hands out
+        # dynamic addresses only from ip_range (.128+), so they can never collide with the fixed ones.
+        - subnet: 172.28.0.0/24
+          ip_range: 172.28.0.128/25
 
 volumes:
   esdata:
     driver: local
-  veritasdata:            # shared SQLite file: the single source of truth for HTTP + gRPC
+  veritasdata:            # shared SQLite file (WAL): the single source of truth for ALL replicas, HTTP and gRPC
     driver: local
+
+# ---------------------------------------------------------------------
+# A3: three identical replicas. Each one serves HTTP (8000) AND gRPC (50051) from one process.
+# ---------------------------------------------------------------------
+x-replica-env: &replica-env
+  VERITAS_DB_PATH: /data/veritas.db
+  SERVICE_NAME: veritas-app
+  ENABLE_GRPC: "true"
+  GRPC_PORT: "50051"
+  GRPC_MAX_WORKERS: "32"
+  ENABLE_FAULT_INJECTION: "true"       # enables /internal/delay (A3 latency experiment) and the A2 fault hook
+  INJECT_DELAY_MS: "0"
+  CARDINALITY_DEMO_USE_LABEL: "false"
+  RATE_LIMIT_BACKEND: db               # shared counters; "memory" = per-replica counters (see README-A3)
+  LOGIN_RATE_LIMIT: "5"
+  LOGIN_RATE_WINDOW: "60"
+
+x-replica: &replica
+  build: .
+  image: veritas-app:a3
+  volumes:
+    - veritasdata:/data
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+    start_period: 10s
+  labels:
+    co.elastic.logs/enabled: "true"
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+  restart: unless-stopped
 
 services:
 
-  # ------------------------------------------------------------------
-  # APPLICATION (HTTP) -- owns schema creation and demo seeding
-  # ------------------------------------------------------------------
-  veritas:
-    build: .
-    container_name: veritas-app
-    ports:
-      - "8000:8000"
+  veritas-a:                              # owns schema creation + demo seeding
+    <<: *replica
+    container_name: veritas-a
     environment:
-      - SEED_DEMO_DATA=true
-      - VERITAS_DB_PATH=/data/veritas.db
-      - ENABLE_FAULT_INJECTION=true      # test hook used by scripts/http_caller.py; set false in real use
-      - CARDINALITY_DEMO_USE_LABEL=false # A2 audit: unsafe request_id label is now opt-in
-      - LOGIN_RATE_LIMIT=5
-      - LOGIN_RATE_WINDOW=60
-    volumes:
-      - veritasdata:/data
+      <<: *replica-env
+      REPLICA_ID: A
+      SEED_DEMO_DATA: "true"
+    ports: ["8001:8000", "50061:50051"]   # direct access (bypasses Envoy): HTTP / gRPC
     networks:
-      - veritas-net
-    labels:
-      co.elastic.logs/enabled: "true"
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    restart: unless-stopped
+      veritas-net:
+        ipv4_address: 172.28.0.11
+
+  veritas-b:
+    <<: *replica
+    container_name: veritas-b
+    environment:
+      <<: *replica-env
+      REPLICA_ID: B
+      SEED_DEMO_DATA: "false"
+    ports: ["8002:8000", "50062:50051"]
+    depends_on:
+      veritas-a:
+        condition: service_healthy
+    networks:
+      veritas-net:
+        ipv4_address: 172.28.0.12
+
+  veritas-c:
+    <<: *replica
+    container_name: veritas-c
+    environment:
+      <<: *replica-env
+      REPLICA_ID: C
+      SEED_DEMO_DATA: "false"
+    ports: ["8003:8000", "50063:50051"]
+    depends_on:
+      veritas-a:
+        condition: service_healthy
+    networks:
+      veritas-net:
+        ipv4_address: 172.28.0.13
 
   # ------------------------------------------------------------------
-  # APPLICATION (gRPC) -- same image, same DB, same business rules
+  # ENVOY: HTTP listener 8000 and gRPC listener 50051 (host ports), admin/metrics on 9901.
+  # Scenario = which generated file in ./envoy is loaded: python scripts/scenario.py <name>  (writes .env)
   # ------------------------------------------------------------------
-  veritas-grpc:
-    build: .
-    container_name: veritas-grpc
-    command: ["python", "-m", "grpc_service.server"]
-    ports:
-      - "50051:50051"   # gRPC
-      - "9101:9101"     # Prometheus metrics
-    environment:
-      - SERVICE_NAME=veritas-grpc
-      - VERITAS_DB_PATH=/data/veritas.db
-      - GRPC_PORT=50051
-      - GRPC_METRICS_PORT=9101
-      - GRPC_MAX_WORKERS=10
+  envoy:
+    image: envoyproxy/envoy:v1.31.0
+    container_name: veritas-envoy
+    # --concurrency 1: one worker thread => one round-robin sequence for all connections (exact, repeatable shares)
+    command: ["-c", "/etc/envoy/${ENVOY_SCENARIO:-a-only}.yaml", "--concurrency", "1", "--log-level", "warn"]
     volumes:
-      - veritasdata:/data
+      - ./envoy:/etc/envoy:ro
+    ports:
+      - "8000:8080"       # HTTP via Envoy (the old app port)
+      - "50051:50051"     # gRPC via Envoy
+      - "9901:9901"       # Envoy admin + /stats/prometheus
     networks:
       - veritas-net
     depends_on:
-      veritas:
+      veritas-a:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 50051), 2)"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      veritas-b:
+        condition: service_healthy
+      veritas-c:
+        condition: service_healthy
     labels:
       co.elastic.logs/enabled: "true"
     logging:
@@ -91,9 +142,7 @@ services:
     networks:
       - veritas-net
     depends_on:
-      veritas:
-        condition: service_healthy
-      veritas-grpc:
+      veritas-a:
         condition: service_healthy
     restart: unless-stopped
 
@@ -174,7 +223,7 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
-      veritas:
+      veritas-a:
         condition: service_healthy
     restart: unless-stopped
 

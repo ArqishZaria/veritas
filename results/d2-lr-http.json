@@ -1,0 +1,35 @@
+{
+  "label": "D2 lr + B 300ms",
+  "interface": "http",
+  "started_utc": "2026-11-15T10:24:55Z",
+  "target_rps": 30.0,
+  "duration_s": 90.0,
+  "sent": 2700,
+  "achieved_send_rps": 30.01,
+  "max_send_lag_ms": 90.3,
+  "success": 2700,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "client_p50_ms": 19.1,
+  "client_p95_ms": 325.4,
+  "client_p99_ms": 394.6,
+  "client_p95_all_ms": 325.4,
+  "outcomes": {
+    "HTTP 200": 2700
+  },
+  "replica_counts": {
+    "C": 1204,
+    "A": 1199,
+    "B": 297
+  },
+  "replica_share_pct": {
+    "A": 44.4,
+    "B": 11.0,
+    "C": 44.6
+  },
+  "sample_trace_ids": {
+    "C": "648d4ff4cfc24cfd9ecc5d4d183b99e4",
+    "A": "b59503276c6a406f822c13fbcdf9fda5",
+    "B": "0a6ba5f0f33e4e759353aa230dde99a6"
+  }
+}
