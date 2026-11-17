@@ -1,0 +1,35 @@
+{
+  "label": "log test",
+  "interface": "grpc",
+  "started_utc": "2026-11-17T07:07:00Z",
+  "target_rps": 5.0,
+  "duration_s": 10.0,
+  "sent": 50,
+  "achieved_send_rps": 5.1,
+  "max_send_lag_ms": 0.0,
+  "success": 50,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "client_p50_ms": 17.3,
+  "client_p95_ms": 91.6,
+  "client_p99_ms": 247.6,
+  "client_p95_all_ms": 91.6,
+  "outcomes": {
+    "OK": 50
+  },
+  "replica_counts": {
+    "B": 17,
+    "C": 17,
+    "A": 16
+  },
+  "replica_share_pct": {
+    "A": 32.0,
+    "B": 34.0,
+    "C": 34.0
+  },
+  "sample_trace_ids": {
+    "B": "083c3896bfef43e8baafa5055b08a54c",
+    "C": "ba7ad38cc9ad40c08e10b96b6add6db4",
+    "A": "e47a3377bdb64c38bb6fd745a987f216"
+  }
+}

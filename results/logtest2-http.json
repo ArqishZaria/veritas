@@ -1,0 +1,35 @@
+{
+  "label": "log test 2",
+  "interface": "http",
+  "started_utc": "2026-11-17T07:16:02Z",
+  "target_rps": 5.0,
+  "duration_s": 10.0,
+  "sent": 50,
+  "achieved_send_rps": 5.1,
+  "max_send_lag_ms": 38.7,
+  "success": 50,
+  "failed": 0,
+  "error_rate_pct": 0.0,
+  "client_p50_ms": 26.4,
+  "client_p95_ms": 156.8,
+  "client_p99_ms": 513.9,
+  "client_p95_all_ms": 156.8,
+  "outcomes": {
+    "HTTP 200": 50
+  },
+  "replica_counts": {
+    "B": 17,
+    "A": 17,
+    "C": 16
+  },
+  "replica_share_pct": {
+    "A": 34.0,
+    "B": 34.0,
+    "C": 32.0
+  },
+  "sample_trace_ids": {
+    "B": "d0a2a72d815e4e85b71e96124ccd5c29",
+    "A": "f8add1b40d9b4d839815b1c58ea30aee",
+    "C": "e143fb25717d4df5a0c56932251e9b06"
+  }
+}

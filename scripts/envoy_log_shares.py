@@ -16,7 +16,7 @@ for line in sys.stdin:
         continue
     if j.get("service.name") != "veritas-envoy" or not j.get("url.path", "").startswith(a.path):
         continue
-    c[(str(j.get("interface") or "-"), str(j.get("replica.id") or "-"))] += 1
+    c[(str(j.get("envoy.interface") or j.get("interface") or "-"), str(j.get("replica.id") or "-"))] += 1
     first, last = first or j.get("@timestamp"), j.get("@timestamp")
 print(f"time range in log: {first} .. {last}")
 for iface in sorted({k[0] for k in c}):

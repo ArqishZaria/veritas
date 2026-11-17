@@ -38,7 +38,7 @@ ACCESS_LOG = """          access_log:
                   "@timestamp": "%START_TIME(%Y-%m-%dT%H:%M:%S.%3fZ)%"
                   "message": "envoy access"
                   "service.name": "veritas-envoy"
-                  "interface": "@@IFACE@@"
+                  "envoy.interface": "@@IFACE@@"
                   "trace.id": "%REQ(X-TRACE-ID)%"
                   "replica.id": "%RESP(X-REPLICA-ID)%"
                   "upstream.host": "%UPSTREAM_HOST%"
